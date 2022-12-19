@@ -1,3 +1,4 @@
-airflow/scripts/configuration.env
+configuration.env
 logs
 projment
+__pycache__

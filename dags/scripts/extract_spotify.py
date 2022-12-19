@@ -1,11 +1,17 @@
 # %%
+# Imports for extractions
 import pandas as pd
 import requests
-import json
 from datetime import datetime
 import datetime
-from dotenv import dotenv_values
+
+# Import for private data
 import pathlib
+from dotenv import dotenv_values
+
+# Imports for writing data into a temp file
+from tempfile import NamedTemporaryFile
+import logging
 
 
 # %%
@@ -95,8 +101,5 @@ def extract_spotifyAPI():
 
     if check_if_valid_data(song_df):
             print("Data valid, proceed to Load stage")
+    
     return song_df
-
-# %%
-extract_spotifyAPI()
-
