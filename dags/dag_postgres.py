@@ -1,4 +1,4 @@
-from datetime import  datetime, timedelta
+from datetime import  datetime
 from airflow.operators.python import PythonOperator
 from airflow.providers.postgres.operators.postgres import PostgresOperator
 from airflow import DAG
