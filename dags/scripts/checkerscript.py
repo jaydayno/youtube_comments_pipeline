@@ -2,20 +2,12 @@
 # Imports for extractions
 import pandas as pd
 import requests
-import json
 from datetime import datetime
 import datetime
 
 # Import for private data
 import pathlib
 from dotenv import dotenv_values
-
-# Imports for writing data into a temp file
-import csv
-from tempfile import NamedTemporaryFile
-import logging
-from extract_spotify import extract_spotifyAPI
-
 
 # %%
 script_path = pathlib.Path(__file__).parent.resolve()
@@ -53,6 +45,7 @@ def check_if_valid_data(df: pd.DataFrame) -> bool:
 
 
 # %%
+
 TOKEN = config["TOKEN"]
 
 # headers needed for the GET request of Spotify API
@@ -93,21 +86,21 @@ song_dict = {
     }
 
 song_df = pd.DataFrame(song_dict, columns = ["song_name", "artist_name", "played_at", "timestamp"])
+
+song_df['played_at'] = song_df['played_at'].apply(lambda x: 
+    datetime.datetime.strptime(x, '%Y-%m-%dT%H:%M:%S.%fZ').strftime("%Y-%m-%d %H:%M:%S"))
+
 timestamplist = song_df["timestamp"].tolist()
 for i, oneTimestamp in enumerate(timestamplist):
     stringtodatetime = datetime.datetime.strptime(oneTimestamp, '%Y-%m-%d')
     if stringtodatetime.day != yesterday.day:
         song_df = song_df.drop(index=i)
+
 song_df.reset_index(inplace = True, drop = True)
 
 
 if check_if_valid_data(song_df):
         print("Data valid, proceed to Load stage")
 
-
-with NamedTemporaryFile(mode='w', suffix='.csv') as temp:
-    temp_path = str(pathlib.Path(__file__).parent.resolve()) + temp.name
-    print(temp_path)
-    temp.close()
-
+song_df
 # %%

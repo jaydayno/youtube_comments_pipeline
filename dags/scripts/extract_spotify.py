@@ -9,11 +9,6 @@ import datetime
 import pathlib
 from dotenv import dotenv_values
 
-# Imports for writing data into a temp file
-from tempfile import NamedTemporaryFile
-import logging
-
-
 # %%
 script_path = pathlib.Path(__file__).parent.resolve()
 config = dotenv_values(f"{script_path}/configuration.env")
@@ -91,11 +86,16 @@ def extract_spotifyAPI():
         }
 
     song_df = pd.DataFrame(song_dict, columns = ["song_name", "artist_name", "played_at", "timestamp"])
+    
+    song_df['played_at'] = song_df['played_at'].apply(lambda x: 
+        datetime.datetime.strptime(x, '%Y-%m-%dT%H:%M:%S.%fZ').strftime("%Y-%m-%d %H:%M:%S"))
+
     timestamplist = song_df["timestamp"].tolist()
     for i, oneTimestamp in enumerate(timestamplist):
         stringtodatetime = datetime.datetime.strptime(oneTimestamp, '%Y-%m-%d')
         if stringtodatetime.day != yesterday.day:
             song_df = song_df.drop(index=i)
+    
     song_df.reset_index(inplace = True, drop = True)
 
 

@@ -10,8 +10,6 @@ from upload_to_postgres import postgres_to_s3
 
 default_args = {
     'owner': 'jay',
-    'retries': 1,
-    'retry_delay': timedelta(minutes=5)
 }
 
 with DAG(
@@ -28,8 +26,8 @@ with DAG(
         CREATE TABLE IF NOT EXISTS spotify_data (
             song_name character varying,
             artist_name character varying,
-            played_at timestamp,
-            timestamp timestamp
+            played_at character varying,
+            timestamp character varying
         )
         """
     ),

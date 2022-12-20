@@ -2,3 +2,6 @@ configuration.env
 logs
 projment
 __pycache__
+
+
+dags/scripts/checkerscript.py
