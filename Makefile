@@ -1,6 +1,3 @@
-####################################################################################################################
-# Setup containers to run Airflow.
-
 airflow-up:
 	docker-compose up airflow-init && docker-compose up -d
 
