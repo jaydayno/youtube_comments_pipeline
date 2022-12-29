@@ -1,23 +1,18 @@
-import csv
 from airflow.providers.postgres.operators.postgres import PostgresOperator
 from airflow.providers.postgres.hooks.postgres import PostgresHook
-from airflow.providers.amazon.aws.hooks.s3 import S3Hook
-from airflow.operators.python import PythonOperator
+from airflow.operators.bash import BashOperator
 from airflow.models import Connection
 from airflow import settings
 from airflow.decorators import task
 from airflow import DAG
 
-from extract_spotify import extract_spotifyAPI
-
-from datetime import datetime
+import datetime
 import logging
-from tempfile import NamedTemporaryFile, TemporaryDirectory
+from tempfile import TemporaryDirectory
 import pandas as pd
 import os
-import sys
-sys.path.append('/opt/airflow/dags/scripts')
 
+from scripts.extract_spotify import extract_spotifyAPI
 
 default_args = {
     'owner': 'jay',
@@ -26,8 +21,9 @@ default_args = {
 with DAG(
     default_args=default_args,
     dag_id='postgres_v02',
-    start_date=datetime(2022, 12, 22),
-    schedule_interval='@daily'
+    start_date=datetime.datetime.now(),
+    schedule_interval='@daily',
+    catchup=False
 ) as dag:
 
 # Task 1
@@ -61,12 +57,14 @@ with DAG(
         task_id='create_table_in_db',
         postgres_conn_id='postgres_localhost',
         sql="""
+        DROP TABLE IF EXISTS spotify_data;
+
         CREATE TABLE IF NOT EXISTS spotify_data (
             song_name character varying,
             artist_name character varying,
             played_at character varying,
             timestamp character varying
-        )
+        );
         """,
     )
 
@@ -77,14 +75,14 @@ with DAG(
         try:
             with TemporaryDirectory() as tdr:
                 pathName = os.path.join(tdr, 'song_df.csv')
-                df.to_csv(os.path.join(tdr, 'song_df.csv'), index=False)
+                df.to_csv(os.path.join(tdr, 'song_df.csv'), index=False, header=False)
                 pg_hook = PostgresHook(postgres_conn_id="postgres_localhost")
                 conn = pg_hook.get_conn()
                 cursor = conn.cursor()
                 with open(pathName, 'r') as f:
                     cursor.copy_from(f, "spotify_data", sep=',')
                     conn.commit()
-                    logging.info(f"Song csv {pathName} has been pushed to PostgreSQL DB!")
+                    logging.info(f"Song csv {pathName} has been pushed to PostgreSQL DB with size {f.tell()} B!")
                     return
         except:
             conn.rollback()
@@ -95,37 +93,12 @@ with DAG(
 
     insert_spotify_table = insert_postgres(extract_spotifyAPI())
 
+
 # Task 4
-    @task(task_id="pg_to_s3")
-    def postgres_to_s3(ds_nodash):
-        # step 1: query data from postgresql db and save into text file
-        hook = PostgresHook(postgres_conn_id="postgres_localhost")
-        conn = hook.get_conn()
-        cursor = conn.cursor()
-        cursor.execute("SELECT * FROM spotify_data")
-        try:
-            with NamedTemporaryFile(mode='w', suffix=f"{ds_nodash}") as f:
-                csv_writer = csv.writer(f)
-                csv_writer.writerow([i[0] for i in cursor.description])
-                csv_writer.writerows(cursor)
-                f.flush()
-                logging.info("Temp file created.")
-                # step 2: upload text file into S3
-                s3_hook = S3Hook(aws_conn_id="minio_conn") # PUT S3 CONN ID
-                s3_hook.load_file(
-                    filename=f.name,
-                    key=f"{ds_nodash}.txt", # FIGURE OUT WHAT KEY IS
-                    bucket_name="_____", # PUT NAME OF S3 BUCKET (global var)
-                    replace=True
-                )
-                logging.info("Spotify file %s has been pushed to S3!", f.name)
-        except:
-            conn.rollback()
-            pass
-        finally:
-            cursor.close()
-            conn.close()
-    postgres_txt_to_s3 = postgres_to_s3(extract_spotifyAPI())
+    postgres_txt_to_s3 = BashOperator(
+        task_id='bash_execute_upload_script',
+        bash_command="python /opt/airflow/scripts/upload_from_postgres_to_s3.py {{ ds_nodash }}",
+    )
 
 ################ Setting task order ################
     add_connection_on_airflow.set_downstream(create_spotify_table)

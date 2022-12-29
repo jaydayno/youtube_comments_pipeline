@@ -4,6 +4,7 @@ import pandas as pd
 import requests
 from datetime import datetime
 import datetime
+import logging
 
 # Import for private data
 import pathlib
@@ -18,7 +19,7 @@ config = dotenv_values(f"{script_path}/configuration.env")
 def check_if_valid_data(df: pd.DataFrame) -> bool:
     # Check if dataframe is empty
     if df.empty:
-        print("No songs downloaded. Finishing execution")
+        logging.info("No songs downloaded. Finishing execution")
         return False 
 
     # Primary Key Check
@@ -91,15 +92,19 @@ def extract_spotifyAPI():
         datetime.datetime.strptime(x, '%Y-%m-%dT%H:%M:%S.%fZ').strftime("%Y-%m-%d %H:%M:%S"))
 
     timestamplist = song_df["timestamp"].tolist()
+    row_count = len(song_df["timestamp"].tolist())
+    count_of_dropped = 0
     for i, oneTimestamp in enumerate(timestamplist):
         stringtodatetime = datetime.datetime.strptime(oneTimestamp, '%Y-%m-%d')
         if stringtodatetime.day != yesterday.day:
+            count_of_dropped += 1
             song_df = song_df.drop(index=i)
+
     
     song_df.reset_index(inplace = True, drop = True)
 
 
     if check_if_valid_data(song_df):
-            print("Data valid, proceed to Load stage")
+        logging.info(f"Data valid, proceed to Load stage with {count_of_dropped} rows dropped out of {row_count}")
     
     return song_df
