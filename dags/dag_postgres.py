@@ -97,7 +97,7 @@ with DAG(
 # Task 4
     postgres_txt_to_s3 = BashOperator(
         task_id='bash_execute_upload_script',
-        bash_command="python /opt/airflow/scripts/upload_from_postgres_to_s3.py {{ ds_nodash }}",
+        bash_command="python /opt/airflow/dags/scripts/upload_from_postgres_to_s3.py {{ ds_nodash }}",
     )
 
 ################ Setting task order ################
