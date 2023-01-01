@@ -65,12 +65,12 @@ def extract_spotify_API():
 def upload_to_S3(target_name: str, script_loc: str = None) -> False:
     BUCKET_NAME = config['bucket_name']
 
-    s3 = S3Hook()
+    s3 = S3Hook(aws_conn_id='aws_default')
     if script_loc == None:
         spot_data = extract_spotify_API()
         with NamedTemporaryFile('w+', encoding='utf-8') as f:
             json.dump(spot_data, f)
-            s3.load_file(filename=f, bucket_name=BUCKET_NAME, key=target_name)
+            s3.load_file(filename=f.name, bucket_name=BUCKET_NAME, key=target_name)
             logging.info(f"json from spotify API uploaded to S3 bucket: {BUCKET_NAME} with name {target_name}")
             return True
     else:

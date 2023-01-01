@@ -5,7 +5,7 @@ zip:
 	chmod +x generate_zip.sh
 	./generate_zip.sh
 
-infra:
+infra-up:
 	terraform -chdir=terraform/ init -input=false
 	terraform -chdir=terraform/ apply
 

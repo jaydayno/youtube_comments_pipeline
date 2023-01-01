@@ -50,16 +50,16 @@ policy_arn  = aws_iam_policy.iam_policy_for_lambda.arn
 # Zipping processing script for lambda
 data "archive_file" "zip_the_python_code" {
 type        = "zip"
-source_dir  = "${path.cwd}/dags/scripts/processing_json.py"
-output_path = "${path.cwd}/dags/scripts/processing_json.zip"
+source_file  = "${path.module}/../dags/scripts/processing_json.py"
+output_path = "${path.module}/../dags/scripts/processing_json.zip"
 }
 
 # AWS Lambda
 resource "aws_lambda_function" "terraform_lambda_func" {
-filename                       = "${path.cwd}/dags/scripts/processing_json.zip"
+filename                       = "${path.module}/../dags/scripts/processing_json.zip"
 function_name                  = "Test_Lambda_Function"
 role                           = aws_iam_role.lambda_role.arn
-handler                        = "index.lambda_handler"
+handler                        = "processing_json.lambda_handler"
 runtime                        = "python3.8"
 depends_on                     = [aws_iam_role_policy_attachment.attach_iam_policy_to_iam_role]
 memory_size                    = 128
