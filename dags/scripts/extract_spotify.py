@@ -1,12 +1,12 @@
 # %%
-# Imports for extractions
-import pandas as pd
+from airflow.hooks.S3_hook import S3Hook
 import requests
+from tempfile import NamedTemporaryFile
 from datetime import datetime
 import datetime
+import json
 import logging
 
-# Import for private data
 import pathlib
 from dotenv import dotenv_values
 
@@ -14,39 +14,8 @@ from dotenv import dotenv_values
 script_path = pathlib.Path(__file__).parent.resolve()
 config = dotenv_values(f"{script_path}/configuration.env")
 
-
 # %%
-def check_if_valid_data(df: pd.DataFrame) -> bool:
-    # Check if dataframe is empty
-    if df.empty:
-        logging.info("No songs downloaded. Finishing execution")
-        return False 
-
-    # Primary Key Check
-    if pd.Series(df['played_at']).is_unique:
-        pass
-    else:
-        raise Exception("Primary Key check is violated")
-
-    # Check for nulls
-    if df.isnull().values.any():
-        raise Exception("Null values found")
-
-    # Check that all timestamps are of yesterday's date
-    yesterday = datetime.datetime.now() - datetime.timedelta(days=1)
-    yesterday = yesterday.replace(hour=0, minute=0, second=0, microsecond=0)
-
-    timestamps = df["timestamp"].tolist()
-    for timestamp in timestamps:
-        if datetime.datetime.strptime(timestamp, '%Y-%m-%d') != yesterday:
-            raise Exception(f"At least one of the returned songs ({timestamp}) does not have a yesterday's timestamp")
-
-    return True
-
-
-
-# %%
-def extract_spotifyAPI():
+def extract_spotify_API():
     TOKEN = config["TOKEN"]
 
     # headers needed for the GET request of Spotify API
@@ -66,13 +35,14 @@ def extract_spotifyAPI():
     # Download all songs you've listened to "after yesterday", which means in the last 24 hours
     r = requests.get(f"https://api.spotify.com/v1/me/player/recently-played?after={yesterday_unix_timestamp}", headers = headers)
 
-    data = r.json()
+    json_data = r.json()
+
     song_names = []
     artist_names = []
     played_at_list = []
     timestamps = []
 
-    for song in data["items"]:
+    for song in json_data["items"]:
             song_names.append(song["track"]["name"])
             artist_names.append(song["track"]["album"]["artists"][0]["name"])
             played_at_list.append(song["played_at"])
@@ -86,25 +56,22 @@ def extract_spotifyAPI():
             "timestamp" : timestamps
         }
 
-    song_df = pd.DataFrame(song_dict, columns = ["song_name", "artist_name", "played_at", "timestamp"])
-    
-    song_df['played_at'] = song_df['played_at'].apply(lambda x: 
-        datetime.datetime.strptime(x, '%Y-%m-%dT%H:%M:%S.%fZ').strftime("%Y-%m-%d %H:%M:%S"))
+    with NamedTemporaryFile('w+', encoding='utf-8') as f:
+        json.dump(song_dict, f)
+        logging.info(f"Current size of song_dict is {f.tell()}")
 
-    timestamplist = song_df["timestamp"].tolist()
-    row_count = len(song_df["timestamp"].tolist())
-    count_of_dropped = 0
-    for i, oneTimestamp in enumerate(timestamplist):
-        stringtodatetime = datetime.datetime.strptime(oneTimestamp, '%Y-%m-%d')
-        if stringtodatetime.day != yesterday.day:
-            count_of_dropped += 1
-            song_df = song_df.drop(index=i)
+    return song_dict
 
-    
-    song_df.reset_index(inplace = True, drop = True)
+def upload_to_S3(target_name: str, script_loc: str = None) -> False:
+    BUCKET_NAME = config['bucket_name']
 
-
-    if check_if_valid_data(song_df):
-        logging.info(f"Data valid, proceed to Load stage with {count_of_dropped} rows dropped out of {row_count}")
-    
-    return song_df
+    s3 = S3Hook()
+    if script_loc == None:
+        spot_data = extract_spotify_API()
+        with NamedTemporaryFile('w+', encoding='utf-8') as f:
+            json.dump(spot_data, f)
+            s3.load_file(filename=f, bucket_name=BUCKET_NAME, key=target_name)
+            logging.info(f"json from spotify API uploaded to S3 bucket: {BUCKET_NAME} with name {target_name}")
+            return True
+    else:
+        s3.load_file(filename=script_loc, bucket_name=BUCKET_NAME, key=target_name)

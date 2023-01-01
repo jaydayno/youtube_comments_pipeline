@@ -6,3 +6,4 @@ __pycache__
 terraform/terraform.tfstate
 terraform/terraform.tfstate.backup
 terraform/.terraform
+terraform/my-deployment-package.zip

@@ -1,6 +1,10 @@
 airflow-up:
 	docker-compose up airflow-init && docker-compose up -d
 
+zip:
+	chmod +x generate_zip.sh
+	./generate_zip.sh
+
 infra:
 	terraform -chdir=terraform/ init -input=false
 	terraform -chdir=terraform/ apply
