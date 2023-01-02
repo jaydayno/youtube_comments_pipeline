@@ -20,20 +20,20 @@ with DAG(
 ) as dag:
 
 # Task 1
-    add_aws_connection = PythonOperator(
-        task_id='adding_aws_connection',
-        python_callable=add_AWS_connection_to_airflow
-    )
+    # add_aws_connection = PythonOperator(
+    #     task_id='adding_aws_connection',
+    #     python_callable=add_AWS_connection_to_airflow
+    # )
 
 
 # Task 2
-    upload_raw = PythonOperator(
-        task_id='extract_and_upload_raw',
-        python_callable=upload_to_S3,
-        op_kwargs={
-        'target_name': 'raw/spotify_data_{{ ds_nodash }}.json'
-        }
-    )
+    # upload_raw = PythonOperator(
+    #     task_id='extract_and_upload_raw',
+    #     python_callable=upload_to_S3,
+    #     op_kwargs={
+    #     'target_name': 'raw/spotify_data_{{ ds_nodash }}.json'
+    #     }
+    # )
 
 # Task 3
     invoke_lambda_function = PythonOperator(
@@ -52,5 +52,6 @@ with DAG(
 
 
 ################ Setting task order ################
-add_aws_connection >> upload_raw #>> invoke_lambda_function
+# add_aws_connection >> upload_raw 
+invoke_lambda_function
 

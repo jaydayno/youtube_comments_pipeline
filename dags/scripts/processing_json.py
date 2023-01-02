@@ -3,8 +3,10 @@ from datetime import datetime
 import datetime
 import logging
 import urllib
+import boto3
 
 def lambda_handler(event, context):
+    s3 = boto3.client('s3')
     bucket = event['Records'][0]['s3']['bucket']['name']
     key = urllib.parse.unquote_plus(event['Records'][0]['s3']['object']['key'], encoding='utf-8')
     try:

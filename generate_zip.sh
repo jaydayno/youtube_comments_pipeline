@@ -4,6 +4,6 @@ then
     rm -rf my-deployment-package.zip
 fi
 
-pip install --target ./package --no-cache-dir -r ../requirements.txt
-zip -r my-deployment-package.zip package
-rm -rf package
+pip install --target ./python/lib/python3.8/site-packages --no-cache-dir -r ../requirements.txt
+zip -r my-deployment-package.zip python
+rm -rf python
