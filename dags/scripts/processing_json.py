@@ -4,19 +4,8 @@ import datetime
 import logging
 import urllib
 import boto3
-
-def lambda_handler(event, context):
-    s3 = boto3.client('s3')
-    bucket = event['Records'][0]['s3']['bucket']['name']
-    key = urllib.parse.unquote_plus(event['Records'][0]['s3']['object']['key'], encoding='utf-8')
-    try:
-        response = s3.get_object(Bucket=bucket, Key=key)
-        print("CONTENT TYPE: " + response['ContentType'])
-        return response['ContentType']
-    except Exception as e:
-        print(e)
-        print('Error getting object {} from bucket {}. Make sure they exist and your bucket is in the same region as this function.'.format(key, bucket))
-        raise e
+import json
+from io import StringIO
 
 def check_if_valid_data(df: pd.DataFrame) -> bool:
     # Check if dataframe is empty
@@ -35,7 +24,7 @@ def check_if_valid_data(df: pd.DataFrame) -> bool:
         raise Exception("Null values found")
 
     # Check that all timestamps are of yesterday's date
-    yesterday = datetime.datetime.now() - datetime.timedelta(days=1)
+    yesterday = datetime.datetime.today() - datetime.timedelta(days=1, hours=5)
     yesterday = yesterday.replace(hour=0, minute=0, second=0, microsecond=0)
 
     timestamps = df["timestamp"].tolist()
@@ -74,3 +63,19 @@ def clean_data(data):
         logging.info(f"Data valid, proceed to Load stage with {count_of_dropped} rows dropped out of {row_count}")
     
     return song_df
+    
+def lambda_handler(event, context):
+    s3 = boto3.client('s3')
+    bucket = event['Records'][0]['s3']['bucket']['name']
+    key = urllib.parse.unquote_plus(event['Records'][0]['s3']['object']['key'], encoding='utf-8')
+    try:
+        json_data = s3.get_object(Bucket=bucket, Key=key)["Body"].read()
+        dict_data = json.loads(json_data)
+        df = clean_data(dict_data)
+        csv_buffer = StringIO()
+        df.to_csv(csv_buffer)
+        s3.put_object(Body=csv_buffer.getvalue(), Bucket=bucket, Key="stage/spotify_data2_20230103.csv")
+        return True
+    except Exception as e:
+        print(e)
+        raise e

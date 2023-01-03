@@ -1,6 +1,6 @@
 from airflow.operators.python import PythonOperator
 from airflow import DAG
-import datetime
+from datetime import datetime
 import json
 
 from scripts.extract_spotify import upload_to_S3
@@ -13,27 +13,26 @@ default_args = {
 
 with DAG(
     default_args=default_args,
-    dag_id='primary_dag',
-    start_date=datetime.datetime.now(),
+    dag_id='primary_dagv2',
+    start_date=datetime(2023, 1, 2),
     schedule_interval='@daily',
     catchup=False
 ) as dag:
 
-# Task 1
-    # add_aws_connection = PythonOperator(
-    #     task_id='adding_aws_connection',
-    #     python_callable=add_AWS_connection_to_airflow
-    # )
+# # Task 1
+    add_aws_connection = PythonOperator(
+        task_id='adding_aws_connection',
+        python_callable=add_AWS_connection_to_airflow
+    )
 
-
-# Task 2
-    # upload_raw = PythonOperator(
-    #     task_id='extract_and_upload_raw',
-    #     python_callable=upload_to_S3,
-    #     op_kwargs={
-    #     'target_name': 'raw/spotify_data_{{ ds_nodash }}.json'
-    #     }
-    # )
+# # Task 2
+    upload_raw = PythonOperator(
+        task_id='extract_and_upload_raw',
+        python_callable=upload_to_S3,
+        op_kwargs={
+        'target_name': 'raw/spotify_data2_{{ ds_nodash }}.json'
+        }
+    )
 
 # Task 3
     invoke_lambda_function = PythonOperator(

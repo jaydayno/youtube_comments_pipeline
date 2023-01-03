@@ -1,11 +1,12 @@
-# %%
 from airflow.hooks.S3_hook import S3Hook
+# %%
 import requests
 from tempfile import NamedTemporaryFile
 from datetime import datetime
 import datetime
 import json
 import logging
+from pytz import timezone
 
 import pathlib
 from dotenv import dotenv_values
@@ -26,9 +27,9 @@ def extract_spotify_API():
         }
 
     # Convert time to Unix timestamp in miliseconds
-    todaydate = datetime.date.today()
+    todaydate = datetime.datetime.today() - datetime.timedelta(hours=5) # EST since Airflow uses UTC
     todaytime = datetime.datetime.min.time()
-    today = datetime.datetime.combine(todaydate, todaytime)
+    today = datetime.datetime.combine(todaydate, todaytime) # could just use this yesterday.replace(hour=0, minute=0, second=0, microsecond=0)
     yesterday = today - datetime.timedelta(days=1)
     yesterday_unix_timestamp = int(yesterday.timestamp()) * 1000
 
@@ -43,10 +44,10 @@ def extract_spotify_API():
     timestamps = []
 
     for song in json_data["items"]:
-            song_names.append(song["track"]["name"])
-            artist_names.append(song["track"]["album"]["artists"][0]["name"])
-            played_at_list.append(song["played_at"])
-            timestamps.append(song["played_at"][0:10])
+        song_names.append(song["track"]["name"])
+        artist_names.append(song["track"]["album"]["artists"][0]["name"])
+        played_at_list.append(song["played_at"])
+        timestamps.append(song["played_at"][0:10])
 
 
     song_dict = {

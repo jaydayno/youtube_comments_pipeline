@@ -11,7 +11,7 @@ def add_AWS_connection_to_airflow():
     try:
         conn = Connection(
             conn_id="aws_default",
-            conn_type="Amazon Web Services",
+            conn_type="aws",
             extra={
                 'aws_access_key_id' : config['aws_access_key_id'],
                 'aws_secret_access_key' : config['aws_secret_access_key']
