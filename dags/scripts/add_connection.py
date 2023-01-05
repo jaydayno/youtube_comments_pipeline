@@ -14,7 +14,8 @@ def add_AWS_connection_to_airflow():
             conn_type="aws",
             extra={
                 'aws_access_key_id' : config['aws_access_key_id'],
-                'aws_secret_access_key' : config['aws_secret_access_key']
+                'aws_secret_access_key' : config['aws_secret_access_key'],
+                'region_name' : config['aws_region']
             }
         )  # create a connection object
         session = settings.Session()  # get the session
@@ -26,4 +27,4 @@ def add_AWS_connection_to_airflow():
         session.rollback()
         return False
     finally:
-        session.close()
+        session.close()  

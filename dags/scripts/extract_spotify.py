@@ -65,8 +65,8 @@ def extract_spotify_API():
 
 def upload_to_S3(target_name: str) -> False:
     BUCKET_NAME = config['bucket_name']
-
     s3 = S3Hook(aws_conn_id='aws_default')
+
     if s3.check_for_key(key=target_name, bucket_name=BUCKET_NAME) == False:
         spot_data = extract_spotify_API()
         with NamedTemporaryFile('w+', encoding='utf-8') as f:
