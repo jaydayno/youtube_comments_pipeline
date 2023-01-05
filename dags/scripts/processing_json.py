@@ -74,7 +74,9 @@ def lambda_handler(event, context):
         df = clean_data(dict_data)
         csv_buffer = StringIO()
         df.to_csv(csv_buffer)
-        s3.put_object(Body=csv_buffer.getvalue(), Bucket=bucket, Key="stage/spotify_data2_20230103.csv")
+        stage_file_name = key.split(sep='/')[1].split(sep='.')[0]
+        key_for_stage = 'stage/' + stage_file_name + '.csv'
+        s3.put_object(Body=csv_buffer.getvalue(), Bucket=bucket, Key=key_for_stage)
         return True
     except Exception as e:
         print(e)
