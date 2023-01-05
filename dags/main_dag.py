@@ -14,7 +14,7 @@ default_args = {
 with DAG(
     default_args=default_args,
     dag_id='primary_dagv3',
-    start_date=datetime(2023, 1, 2),
+    start_date=datetime(2023, 1, 5),
     schedule_interval='@daily',
     catchup=False
 ) as dag:

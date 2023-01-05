@@ -19,7 +19,7 @@ def invoke_with_operator(ti, target_name: str):
             )
     logging.info("Lambda response metadata: %r", response.get("ResponseMetadata"))
     if response.get("StatusCode") not in success_status_codes:
-        raise ValueError('Lambda function did not execute', json.dumps(response.get("ResponseMetadata")))
+        raise ValueError(f'Lambda function got this response: {response.get("StatusCode")} did not execute', json.dumps(response.get("ResponseMetadata")))
     payload_stream = response.get("Payload")
     payload = payload_stream.read().decode()
     if "FunctionError" in response:

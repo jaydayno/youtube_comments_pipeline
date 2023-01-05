@@ -57,9 +57,9 @@ def extract_spotify_API():
             "timestamp" : timestamps
         }
 
-    with NamedTemporaryFile('w+', encoding='utf-8') as f:
-        json.dump(song_dict, f)
-        logging.info(f"Current size of song_dict is {f.tell()}")
+    if len(song_dict['song_name']) == 0:
+        logging.info("No songs downloaded. Finishing execution")
+        raise Exception("No songs received from Spotify API")
 
     return song_dict
 
@@ -71,8 +71,9 @@ def upload_to_S3(target_name: str) -> False:
         spot_data = extract_spotify_API()
         with NamedTemporaryFile('w+', encoding='utf-8') as f:
             json.dump(spot_data, f)
+            f.seek(0)
             s3.load_file(filename=f.name, bucket_name=BUCKET_NAME, key=target_name)
-            logging.info(f"json from spotify API uploaded to S3 bucket: {BUCKET_NAME} with name {target_name}")
+            logging.info(f"json from spotify API uploaded to S3 bucket: {BUCKET_NAME} with name {target_name} with size {f.tell()}")
             return True
     else:
         logging.info(f"ALREADY UPLOADED to S3 bucket: {BUCKET_NAME} with name {target_name}")
