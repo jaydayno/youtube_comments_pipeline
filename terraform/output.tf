@@ -14,3 +14,9 @@ output "lambda_function_name" {
   description = "lambda function name."
   value       = aws_lambda_function.terraform_lambda_func.function_name
 }
+
+## rds instance (postgres)
+output "db_name" {
+  description = "rds name."
+  value       = aws_db_instance.db-postgres.id
+}

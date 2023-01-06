@@ -1,3 +1,5 @@
+# %%
+from airflow.models.variable import Variable
 from airflow.models import Connection
 from airflow import settings
 import pathlib
@@ -28,3 +30,10 @@ def add_AWS_connection_to_airflow():
         return False
     finally:
         session.close()  
+# %%
+def add_config_as_variables_to_airflow():
+    for key_i in config:
+        if key_i == '[default]':
+            break
+        Variable.set(key_i, config[key_i])
+    return True
