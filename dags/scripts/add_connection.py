@@ -37,3 +37,25 @@ def add_config_as_variables_to_airflow():
             break
         Variable.set(key_i, config[key_i])
     return True
+
+def add_rds_postgres_connection():
+        try:
+            conn = Connection(
+                conn_id=config['db_id'],
+                conn_type="postgres",
+                description=None,
+                login="dbadmin",                                                ## ADD config
+                password="Education2899",                                       ## ADD config
+                host="db-postgres.chofihkladab.us-east-1.rds.amazonaws.com",    ## ADD config
+                port=5432,
+                schema=config['db_main_name']                                    
+            )  # create a connection object
+            session = settings.Session()  # get the session
+            session.add(conn)
+            session.commit()
+        except:
+            session.rollback()
+            return False
+        finally:
+            session.close()
+            return True

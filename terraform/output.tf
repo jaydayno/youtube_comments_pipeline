@@ -16,7 +16,12 @@ output "lambda_function_name" {
 }
 
 ## rds instance (postgres)
-output "db_name" {
-  description = "rds name."
+output "db_id" {
+  description = "rds id."
   value       = aws_db_instance.db-postgres.id
+}
+
+output "db_main_name" {
+  description = "Name of the database (postgres) on rds."
+  value        = aws_db_instance.db-postgres.db_name
 }
