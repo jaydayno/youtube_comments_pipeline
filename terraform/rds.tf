@@ -6,7 +6,7 @@ resource "aws_db_instance" "db-postgres" {
   engine_version         = "14.1"
 
   username               = "dbadmin"
-  password               = var.db_password
+  password               = random_password.password.result
   db_name                = "spotify_song_db"
   
   publicly_accessible    = true
@@ -38,4 +38,10 @@ resource "aws_security_group" "redshift_security_group" {
     protocol    = "-1"
     cidr_blocks = ["0.0.0.0/0"]
   }
+}
+
+resource "random_password" "password" {
+  length           = 16
+  special          = true
+  override_special = "!#$%&*()-_=+[]{}<>:?"
 }

@@ -1,5 +1,5 @@
 from airflow.providers.postgres.operators.postgres import PostgresOperator
-from airflow.providers.amazon.aws.operators.rds import RdsStartDbOperator
+from airflow.providers.amazon.aws.operators.rds import RdsStopDbOperator
 from airflow.providers.amazon.aws.sensors.s3 import S3KeySensor
 from airflow.operators.python import PythonOperator
 from airflow import DAG
@@ -17,7 +17,7 @@ default_args = {
 with DAG(
     default_args=default_args,
     dag_id='primary_dagv3',
-    start_date=datetime(2023, 1, 7),
+    start_date=datetime(2023, 1, 9),
     schedule_interval='@daily',
     template_searchpath='/usr/local/airflow/queries',
     catchup=False
@@ -86,6 +86,8 @@ with DAG(
         }
     )
 
+# # DONE
+
 # # # Task 8
 #     start_rds = RdsStopDbOperator(
 #         db_identifier="{{ var.value.db_id }}",
@@ -96,5 +98,5 @@ with DAG(
 ################ Setting task order ################
 begin_task >> add_aws_connection >> upload_raw
 upload_raw >> invoke_lambda_function >> sense_stage_data
-#sense_stage_data >> start_rds
+sense_stage_data >> connect_airflow_to_rds_postgres >> create_spotify_table >> insert_into_spotify_table
 

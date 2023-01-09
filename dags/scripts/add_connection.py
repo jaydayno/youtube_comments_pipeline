@@ -44,9 +44,9 @@ def add_rds_postgres_connection():
                 conn_id=config['db_id'],
                 conn_type="postgres",
                 description=None,
-                login="dbadmin",                                                ## ADD config
-                password="Education2899",                                       ## ADD config
-                host="db-postgres.chofihkladab.us-east-1.rds.amazonaws.com",    ## ADD config
+                login=config['db_username'],
+                password=config['db_password'],
+                host=config['db_host'],    ## ex. "db-postgres.chofihkladab.us-east-1.rds.amazonaws.com"
                 port=5432,
                 schema=config['db_main_name']                                    
             )  # create a connection object

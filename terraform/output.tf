@@ -23,5 +23,24 @@ output "db_id" {
 
 output "db_main_name" {
   description = "Name of the database (postgres) on rds."
-  value        = aws_db_instance.db-postgres.db_name
+  value       = aws_db_instance.db-postgres.db_name
+}
+
+output "db_host" {
+  description = "Host name of database (postgres) on rds."
+  value       = aws_db_instance.db-postgres.address
+}
+
+output "db_port" {
+  description = "Port of database (postgres) on rds."
+  value       = aws_db_instance.db-postgres.port
+}
+
+output "db_username" {
+  value     = aws_db_instance.db-postgres.username
+}
+
+output "db_password" {
+  value     = random_password.password.result
+  sensitive = true
 }

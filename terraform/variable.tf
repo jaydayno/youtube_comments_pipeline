@@ -17,8 +17,3 @@ variable "alert_email_id" {
   type        = string
   default     = "jaydendayno@gmail.com"
 }
-
-variable "db_password" {
-  description = "Password for the database in the RDS cluster"
-  type        = string
-}
