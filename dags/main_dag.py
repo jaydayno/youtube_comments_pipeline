@@ -1,5 +1,4 @@
 from airflow.providers.postgres.operators.postgres import PostgresOperator
-from airflow.providers.amazon.aws.operators.rds import RdsStopDbOperator
 from airflow.providers.amazon.aws.sensors.s3 import S3KeySensor
 from airflow.operators.python import PythonOperator
 from airflow import DAG
@@ -19,15 +18,14 @@ with DAG(
     dag_id='primary_dagv3',
     start_date=datetime(2023, 1, 9),
     schedule_interval='@daily',
-    template_searchpath='/usr/local/airflow/queries',
     catchup=False
 ) as dag:
 
 # # Task 0
     begin_task = PythonOperator(
-        task_id='adding_variables',
-        python_callable=add_config_as_variables_to_airflow
-    )
+         task_id='adding_variables',
+         python_callable=add_config_as_variables_to_airflow
+     )
 
 # # Task 1
     add_aws_connection = PythonOperator(
@@ -37,12 +35,12 @@ with DAG(
 
 # # Task 2
     upload_raw = PythonOperator(
-        task_id='extract_and_upload_raw',
-        python_callable=upload_to_S3,
-        op_kwargs={
-        'target_name': 'raw/spotify_data_{{ ds_nodash }}.json'
-        }
-     )
+         task_id='extract_and_upload_raw',
+         python_callable=upload_to_S3,
+         op_kwargs={
+         'target_name': 'raw/spotify_data_{{ ds_nodash }}.json'
+         }
+      )
 
 # # Task 3
     invoke_lambda_function = PythonOperator(
@@ -62,20 +60,17 @@ with DAG(
     )
 
 # # Inserting S3 data into rds instance postgres DB: spotify_song_db
-
 # # Task 5
-    connect_airflow_to_rds_postgres = PythonOperator(
+    connect_to_rds_postgres = PythonOperator(
         task_id="create_new_conn_to_rds_postgres",
         python_callable=add_rds_postgres_connection
    )
-
 # # Task 6
     create_spotify_table = PostgresOperator(
         task_id='create_table_in_rds',
-        postgres_conn_id="{{ var.value.db_id }}",
-        sql='spotify_create.sql'
+        postgres_conn_id="db-postgres", #"{{ task_instance.xcom_pull(task_ids='create_new_conn_to_rds_postgres', key='db_id') }}",
+        sql='sql/spotify_create.sql'
     )
-
 
 # # Task 7
     insert_into_spotify_table = PythonOperator(
@@ -88,15 +83,15 @@ with DAG(
 
 # # DONE
 
+############### Setting task order ################
+begin_task >> add_aws_connection >> upload_raw
+upload_raw >> invoke_lambda_function >> sense_stage_data
+sense_stage_data >> connect_to_rds_postgres >> create_spotify_table >> insert_into_spotify_table
+
+# from airflow.providers.amazon.aws.operators.rds import RdsStopDbOperator
 # # # Task 8
 #     start_rds = RdsStopDbOperator(
 #         db_identifier="{{ var.value.db_id }}",
 #         db_type="instance",
 #         aws_conn_id="aws_default"
 #    )
-
-################ Setting task order ################
-begin_task >> add_aws_connection >> upload_raw
-upload_raw >> invoke_lambda_function >> sense_stage_data
-sense_stage_data >> connect_airflow_to_rds_postgres >> create_spotify_table >> insert_into_spotify_table
-

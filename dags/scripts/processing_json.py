@@ -56,7 +56,7 @@ def clean_data(data):
             song_df = song_df.drop(index=i)
 
     
-    song_df.reset_index(inplace = True, drop = True)
+    song_df = song_df.reset_index(drop = True)
 
 
     if check_if_valid_data(song_df):

@@ -1,4 +1,3 @@
-# %%
 from airflow.models.variable import Variable
 from airflow.models import Connection
 from airflow import settings
@@ -14,9 +13,9 @@ def add_AWS_connection_to_airflow():
         conn = Connection(
             conn_id="aws_default",
             conn_type="aws",
+            login=config['aws_access_key_id'],
+            password=config['aws_secret_access_key'],
             extra={
-                'aws_access_key_id' : config['aws_access_key_id'],
-                'aws_secret_access_key' : config['aws_secret_access_key'],
                 'region_name' : config['aws_region']
             }
         )  # create a connection object
@@ -30,22 +29,27 @@ def add_AWS_connection_to_airflow():
         return False
     finally:
         session.close()  
-# %%
+
 def add_config_as_variables_to_airflow():
     for key_i in config:
         if key_i == '[default]':
             break
-        Variable.set(key_i, config[key_i])
+        try:
+            # {{ var.value.db_id }} calls db_id key, only works for bash 
+            Variable.set(key_i, config[key_i])
+        except:
+            return False
     return True
 
-def add_rds_postgres_connection():
+def add_rds_postgres_connection(ti):
         try:
+            ti.xcom_push(key='db_id', value=config['db_id'])
             conn = Connection(
                 conn_id=config['db_id'],
                 conn_type="postgres",
                 description=None,
                 login=config['db_username'],
-                password=config['db_password'],
+                password=config['db_full_password'],
                 host=config['db_host'],    ## ex. "db-postgres.chofihkladab.us-east-1.rds.amazonaws.com"
                 port=5432,
                 schema=config['db_main_name']                                    
