@@ -6,7 +6,6 @@ from datetime import datetime
 import datetime
 import json
 import logging
-from pytz import timezone
 
 import pathlib
 from dotenv import dotenv_values
