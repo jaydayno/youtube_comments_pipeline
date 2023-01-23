@@ -10,59 +10,37 @@ from io import StringIO
 def check_if_valid_data(df: pd.DataFrame) -> bool:
     # Check if dataframe is empty
     if df.empty:
-        logging.info("No songs downloaded. Finishing execution")
-        return False 
+        return Exception("No comments were extracted")
 
     # Primary Key Check
-    if pd.Series(df['played_at']).is_unique:
+    if df['id'].is_unique:
         pass
     else:
         raise Exception("Primary Key check is violated")
 
-    # Check for nulls
-    if df.isnull().values.any():
+    # Check for nulls on id
+    if df['id'].isnull().values.any():
         raise Exception("Null values found")
-
-    # Check that all timestamps are of yesterday's date
-    yesterday = datetime.datetime.today() - datetime.timedelta(days=1, hours=5)
-    yesterday = yesterday.replace(hour=0, minute=0, second=0, microsecond=0)
-
-    timestamps = df["timestamp"].tolist()
-    for timestamp in timestamps:
-        if datetime.datetime.strptime(timestamp, '%Y-%m-%d') != yesterday:
-            raise Exception(f"At least one of the returned songs ({timestamp}) does not have a yesterday's timestamp")
-
+        
     return True
 
 def clean_data(data):
-    song_df = pd.DataFrame(data, columns = ["song_name", "artist_name", "played_at", "timestamp"])
+    df = pd.DataFrame(data, columns = ["id", "author_channel_id", "author", "viewer_rating", "published_at", "updated_at", "display_text"])
     
-    song_df['played_at'] = song_df['played_at'].apply(lambda x: 
+    df['published_at'] = df['published_at'].apply(lambda x: 
         datetime.datetime.strptime(x, '%Y-%m-%dT%H:%M:%S.%fZ').strftime("%Y-%m-%d %H:%M:%S"))
 
-    # Convert time to Unix timestamp in miliseconds
-    todaydate = datetime.date.today()
-    todaytime = datetime.datetime.min.time()
-    today = datetime.datetime.combine(todaydate, todaytime)
-    yesterday = today - datetime.timedelta(days=1)
+    df['updated_at'] = df['updated_at'].apply(lambda x: 
+        datetime.datetime.strptime(x, '%Y-%m-%dT%H:%M:%S.%fZ').strftime("%Y-%m-%d %H:%M:%S"))
 
-    timestamplist = song_df["timestamp"].tolist()
-    row_count = len(song_df["timestamp"].tolist())
-    count_of_dropped = 0
-    for i, oneTimestamp in enumerate(timestamplist):
-        stringtodatetime = datetime.datetime.strptime(oneTimestamp, '%Y-%m-%d')
-        if stringtodatetime.day != yesterday.day:
-            count_of_dropped += 1
-            song_df = song_df.drop(index=i)
+    df = df.reset_index(drop = True)
 
+    row_count = df['id'].size
+
+    if check_if_valid_data(df):
+        logging.info(f"Data valid, proceed to Load stage. Row count: {row_count}")
     
-    song_df = song_df.reset_index(drop = True)
-
-
-    if check_if_valid_data(song_df):
-        logging.info(f"Data valid, proceed to Load stage with {count_of_dropped} rows dropped out of {row_count}")
-    
-    return song_df
+    return df
     
 def lambda_handler(event, context):
     s3 = boto3.client('s3')

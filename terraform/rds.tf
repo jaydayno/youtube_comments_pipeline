@@ -7,16 +7,16 @@ resource "aws_db_instance" "db-postgres" {
 
   username               = "dbadmin"
   password               = random_password.password.result
-  db_name                = "spotify_song_db"
+  db_name                = "youtube_comment_db"
   
   publicly_accessible    = true
   skip_final_snapshot    = true
   vpc_security_group_ids = [aws_security_group.redshift_security_group.id]
 }
 
-# For feature_name --> run command 
-# "aws rds describe-db-engine-versions --engine [ENGINE] --engine-version [ENGINE-VERSION]"
-# and check for "SupportedFeatureNames"
+# For feature_name --> 
+#   run command: "aws rds describe-db-engine-versions --engine [ENGINE] --engine-version [ENGINE-VERSION]"
+#   and check for "SupportedFeatureNames"
 resource "aws_db_instance_role_association" "example" {
   db_instance_identifier = aws_db_instance.db-postgres.id
   feature_name           = "s3Import" 

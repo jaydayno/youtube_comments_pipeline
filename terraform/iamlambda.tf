@@ -60,7 +60,7 @@ output_path = "${path.module}/../dags/scripts/processing_json.zip"
 # AWS Lambda
 resource "aws_lambda_function" "terraform_lambda_func" {
 filename                       = "${path.module}/../dags/scripts/processing_json.zip"
-function_name                  = "Test_Lambda_Function"
+function_name                  = "Youtube_Lambda_Function"
 role                           = aws_iam_role.lambda_role.arn
 handler                        = "processing_json.lambda_handler"
 runtime                        = "python3.8"

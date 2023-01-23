@@ -6,7 +6,7 @@ output "aws_region" {
 ## S3
 output "bucket_name" {
   description = "S3 bucket name."
-  value       = aws_s3_bucket.spotify-bucket.id
+  value       = aws_s3_bucket.youtube-bucket.id
 }
 
 ## Lambda
