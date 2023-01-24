@@ -22,6 +22,7 @@ def parse_channel_id(url_string: str) -> str:
                 Examples:
                 - https://www.youtube.com/@RihannaVEVO
                 - https://www.youtube.com/channel/UC2xskkQVFEpLcGFnNSLQY0A
+                - https://www.youtube.com/user/rihannavevo
 
     Returns:
         Returns the channel id by parsing the youtube channel links.
@@ -30,7 +31,7 @@ def parse_channel_id(url_string: str) -> str:
         ValueError: Parser was not able to parse the given link.
     """
     par_result = urlparse(url_string)
-    if par_result.path.startswith('/@'):
+    if par_result.path.startswith('/@') or par_result.path.startswith('/user'):
         page = requests.get(url_string)
         soup = BeautifulSoup(page.content, 'html.parser')
         html = list(soup.children)[1]
@@ -154,14 +155,15 @@ def add_channel_sql(channel_name: str) -> bool:
     Raises:
         ValueError: Could not create SQL query with channel_name, check path.
     """
+    new_channel_name = channel_name.strip().replace(" ", "")
     try:
-        with open(f'dags/sql/youtube_{channel_name}_create.sql', 'w+') as fi:
+        with open(f'dags/sql/youtube_{new_channel_name}_create.sql', 'w+') as fi:
             fi.seek(0)
             fi.truncate()
             fi.write(
-            f"DROP TABLE IF EXISTS youtube_{channel_name}_data;" +
+            f"DROP TABLE IF EXISTS youtube_{new_channel_name}_data;" +
             dedent(f"""
-            CREATE TABLE IF NOT EXISTS youtube_{channel_name}_data (
+            CREATE TABLE IF NOT EXISTS youtube_{new_channel_name}_data (
                 id character varying,
                 author_channel_id character varying,
                 author character varying,

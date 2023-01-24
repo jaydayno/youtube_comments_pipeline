@@ -81,7 +81,7 @@ with DAG(
     create_youtube_table = PostgresOperator(
         task_id='create_table_in_rds',
         postgres_conn_id="db-postgres", #"{{ task_instance.xcom_pull(task_ids='create_new_conn_to_rds_postgres', key='db_id') }}",
-        sql="sql/youtube_{{ task_instance.xcom_pull(task_ids='extract_and_upload_raw', key='channel_name') }}_create.sql"
+        sql="sql/youtube_"+ "{{ task_instance.xcom_pull(task_ids='extract_and_upload_raw', key='channel_name') }}" + "_create.sql"
     )
 
 # # Task 8

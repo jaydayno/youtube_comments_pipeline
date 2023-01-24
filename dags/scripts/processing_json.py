@@ -24,8 +24,12 @@ def check_if_valid_data(df: pd.DataFrame) -> bool:
         
     return True
 
-def clean_data(data):
-    df = pd.DataFrame(data, columns = ["id", "author_channel_id", "author", "viewer_rating", "published_at", "updated_at", "display_text"])
+def clean_data(data: dict) -> pd.DataFrame:
+    # works if data is dict
+    list_of_values = []
+    for key in data:
+        list_of_values.append(data[key])
+    df = pd.DataFrame(list_of_values, index= ["id", "author_channel_id", "author", "viewer_rating", "published_at", "updated_at", "display_text"]).transpose()
     
     df['published_at'] = df['published_at'].apply(lambda x: 
         datetime.datetime.strptime(x, '%Y-%m-%dT%H:%M:%S.%fZ').strftime("%Y-%m-%d %H:%M:%S"))

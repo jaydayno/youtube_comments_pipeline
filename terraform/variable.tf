@@ -8,7 +8,7 @@ variable "aws_region" {
 variable "bucket_prefix" {
   description = "Bucket prefix for the S3"
   type        = string
-  default     = "spotify-pipeline-"
+  default     = "youtube-pipeline-"
 }
 
 ## Alert email receiver
