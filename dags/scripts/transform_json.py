@@ -8,11 +8,21 @@ import json
 from io import StringIO
 
 def check_if_valid_data(df: pd.DataFrame) -> bool:
+    """
+    Called in transform_data() function.
+    Retrieves the df from lambda_handler() >> transform_data() and checks if empty, no duplications and nulls
+
+    Args:
+        df: ***Validating*** the dataframe, making sure it follows proper ***cleaning, reshaping and de-duplication***
+
+    Returns:
+        Returns True when validation was successful.
+    """
     # Check if dataframe is empty
     if df.empty:
-        return Exception("No comments were extracted")
+        raise Exception("No comments were extracted")
 
-    # Primary Key Check
+    # Primary Key Check/duplicate check
     if df['id'].is_unique:
         pass
     else:
@@ -24,8 +34,18 @@ def check_if_valid_data(df: pd.DataFrame) -> bool:
         
     return True
 
-def clean_data(data: dict) -> pd.DataFrame:
-    # works if data is dict
+def transform_data(data: dict) -> pd.DataFrame:
+    """
+    Called in lambda_handler() function.
+    Retrieves the  from lambda_handler() >> transform_data() and checks if empty, no duplications and nulls
+    
+    Args:
+        data: ***Formatting*** the data into tables or joined tables to match the schema of the target data warehouse/rds database.
+
+    Returns:
+        Returns a valid dataframe 
+    """    
+    
     list_of_values = []
     for key in data:
         list_of_values.append(data[key])
@@ -47,13 +67,25 @@ def clean_data(data: dict) -> pd.DataFrame:
     return df
     
 def lambda_handler(event, context):
+    """
+    Invoked with event via Airflow.
+    Locates the bucket with its name and extracts the raw data (json). 
+    Loads into transform_data() as a python dictionary and uploads stage data into S3.
+    
+    Args:
+        event: json (specified in invoke_with_operator() function from DAG), includes bucket_name and key of the raw data.
+        context: provides properties/methods which hold info about the invocation, function, and execution environment.
+
+    Returns:
+        bool: True if the extraction, transformation/validation and re-upload worked. 
+    """    
     s3 = boto3.client('s3')
     bucket = event['Records'][0]['s3']['bucket']['name']
     key = urllib.parse.unquote_plus(event['Records'][0]['s3']['object']['key'], encoding='utf-8')
     try:
         json_data = s3.get_object(Bucket=bucket, Key=key)["Body"].read()
         dict_data = json.loads(json_data)
-        df = clean_data(dict_data)
+        df = transform_data(dict_data)
         csv_buffer = StringIO()
         df.to_csv(csv_buffer)
         stage_file_name = key.split(sep='/')[1].split(sep='.')[0]

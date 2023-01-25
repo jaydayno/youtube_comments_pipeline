@@ -131,7 +131,7 @@ def upload_to_S3(ti, target_name: str, channel_link: str, num_of_comments: int) 
                 json.dump(data, f)
                 f.seek(0)
                 s3.load_file(filename=f.name, bucket_name=BUCKET_NAME, key=target_name)
-                logging.info(f"json from spotify API uploaded to S3 bucket: {BUCKET_NAME} with name {target_name} with size {f.tell()}")
+                logging.info(f"json from Youtube API uploaded to S3 bucket: {BUCKET_NAME} with name {target_name} with size {f.tell()}")
                 return True
         except:
             raise

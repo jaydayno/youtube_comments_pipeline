@@ -9,3 +9,4 @@ terraform/.terraform
 terraform/my-deployment-package.zip
 processing_json.zip
 youtube_create.sql
+plugins

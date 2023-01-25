@@ -70,7 +70,7 @@ with DAG(
         bucket_key="stage/youtube_data_{{ ds_nodash }}.csv"
     )
 
-# # Inserting S3 data into rds instance postgres DB: spotify_song_db
+# # Inserting S3 data into rds instance postgres DB: youtube_comment_db
 # # Task 6
     connect_to_rds_postgres = PythonOperator(
         task_id="create_new_conn_to_rds_postgres",
@@ -85,7 +85,7 @@ with DAG(
     )
 
 # # Task 8
-    insert_into_spotify_table = PythonOperator(
+    insert_into_youtube_table = PythonOperator(
         task_id='insert_s3_data_into_rds',
         python_callable=insert_postgres,
         op_kwargs={
@@ -98,7 +98,7 @@ with DAG(
 ############### Setting task order ################
 begin_task >> add_aws_connection >> upload_raw >> add_sql_script
 add_sql_script >> invoke_lambda_function >> sense_stage_data
-sense_stage_data >> connect_to_rds_postgres >> create_youtube_table >> insert_into_spotify_table
+sense_stage_data >> connect_to_rds_postgres >> create_youtube_table >> insert_into_youtube_table
 
 # from airflow.providers.amazon.aws.operators.rds import RdsStopDbOperator
 # # # Task 9
