@@ -7,6 +7,6 @@ terraform/terraform.tfstate
 terraform/terraform.tfstate.backup
 terraform/.terraform
 terraform/my-deployment-package.zip
-processing_json.zip
 youtube_create.sql
 plugins
+dags/scripts/transform_json.zip

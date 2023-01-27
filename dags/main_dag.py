@@ -16,8 +16,7 @@ default_args = {
 with DAG(
     default_args=default_args,
     dag_id='primary_dagv3',
-    start_date=datetime(2023, 1, 9),
-    schedule_interval='@daily',
+    start_date=datetime.today(),
     catchup=False
 ) as dag:
 
@@ -34,6 +33,7 @@ with DAG(
     )
 
 # # Task 2
+# # ds_nodash is date formatted YYYYMMDD
     upload_raw = PythonOperator(
          task_id='extract_and_upload_raw',
          python_callable=upload_to_S3,
@@ -93,7 +93,7 @@ with DAG(
         }
     )
 
-# # DONE
+# # DONE ETL data pipeline
 
 ############### Setting task order ################
 begin_task >> add_aws_connection >> upload_raw >> add_sql_script

@@ -73,7 +73,7 @@ def add_rds_postgres_connection(ti) -> bool:
             description=None,
             login=config['db_username'],
             password=config['db_full_password'],
-            host=config['db_host'],    ## ex. "db-postgres.chofihkladab.us-east-1.rds.amazonaws.com"
+            host=config['db_host'], 
             port=5432,
             schema=config['db_main_name']                                    
         )  # create a connection object

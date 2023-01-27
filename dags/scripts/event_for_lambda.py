@@ -53,6 +53,7 @@ def invoke_with_operator(ti, target_name: str, stage_name: str):
             raise ValueError(
                 'Lambda function execution resulted in error',
                 {"ResponseMetadata": response.get("ResponseMetadata"), "Payload": payload},
+                event_dict
             )
         logging.info('Lambda function invocation succeeded: %r', response.get("ResponseMetadata"))
 

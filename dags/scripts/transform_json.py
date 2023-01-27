@@ -1,11 +1,12 @@
-import pandas as pd
 from datetime import datetime
+from io import StringIO
+import pandas as pd
 import datetime
 import logging
 import urllib
 import boto3
 import json
-from io import StringIO
+
 
 def check_if_valid_data(df: pd.DataFrame) -> bool:
     """
@@ -48,14 +49,21 @@ def transform_data(data: dict) -> pd.DataFrame:
     
     list_of_values = []
     for key in data:
-        list_of_values.append(data[key])
+        if key == 'comment_displayTexts':
+            list_of_values.append(
+            [x.encode('utf-16', 'surrogatepass')
+            .decode('utf-16')
+            .encode("raw_unicode_escape")
+            .decode("latin_1") for x in data[key]])
+        else:
+            list_of_values.append(data[key])
     df = pd.DataFrame(list_of_values, index= ["id", "author_channel_id", "author", "viewer_rating", "published_at", "updated_at", "display_text"]).transpose()
     
-    df['published_at'] = df['published_at'].apply(lambda x: 
-        datetime.datetime.strptime(x, '%Y-%m-%dT%H:%M:%S.%fZ').strftime("%Y-%m-%d %H:%M:%S"))
+    df['published_at'].apply(lambda x: 
+        datetime.datetime.strptime(x, '%Y-%m-%dT%H:%M:%SZ').strftime("%Y-%m-%d %H:%M:%S"))
 
     df['updated_at'] = df['updated_at'].apply(lambda x: 
-        datetime.datetime.strptime(x, '%Y-%m-%dT%H:%M:%S.%fZ').strftime("%Y-%m-%d %H:%M:%S"))
+        datetime.datetime.strptime(x, '%Y-%m-%dT%H:%M:%SZ').strftime("%Y-%m-%d %H:%M:%S"))
 
     df = df.reset_index(drop = True)
 
