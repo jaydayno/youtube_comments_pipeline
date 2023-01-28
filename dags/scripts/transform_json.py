@@ -2,6 +2,7 @@ from datetime import datetime
 from textblob import TextBlob
 from io import StringIO
 import pandas as pd
+import numpy as np
 import datetime
 import logging
 import urllib
@@ -39,7 +40,7 @@ def check_if_valid_data(df: pd.DataFrame) -> bool:
 def transform_data(data: dict) -> pd.DataFrame:
     """
     Called in lambda_handler() function.
-    Retrieves the  from lambda_handler() >> transform_data() and checks if empty, no duplications and nulls
+    Retrieves the S3 json data from lambda_handler() >> transform_data() and checks if empty, no duplications and nulls
     
     Args:
         data: ***Formatting*** the data into tables or joined tables to match the schema of the target data warehouse/rds database.
@@ -47,7 +48,6 @@ def transform_data(data: dict) -> pd.DataFrame:
     Returns:
         Returns a valid dataframe 
     """    
-    
     list_of_values = []
     for key in data:
         if key == 'comment_displayTexts':
@@ -74,6 +74,16 @@ def transform_data(data: dict) -> pd.DataFrame:
     return df
 
 def analyze_sentiments(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Called in lambda_handler() function.
+    Retrieves valid data (df) and extends the dataframe with 2 columns for 'text_polarities' [-1, 1] and 'classifications'
+    
+    Args:
+        df: Valid data from transform_data()
+
+    Returns:
+        Returns dataframe with classifications for each comment
+    """  
     text_polarities, classifications = [], []
     for text in df['display_text']:
         blob = TextBlob(text)
@@ -113,7 +123,8 @@ def lambda_handler(event, context):
         valid_df = transform_data(dict_data)
         df = analyze_sentiments(valid_df)
         csv_buffer = StringIO()
-        df.to_csv(csv_buffer, index=False)
+        my_numpy = df.to_numpy()
+        np.savetxt(csv_buffer, my_numpy, fmt='%s', delimiter=':::')
         stage_file_name = key.split(sep='/')[1].split(sep='.')[0]
         key_for_stage = 'stage/' + stage_file_name + '.csv'
         s3.put_object(Body=csv_buffer.getvalue(), Bucket=bucket, Key=key_for_stage)

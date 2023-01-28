@@ -2,7 +2,7 @@ from airflow.providers.postgres.hooks.postgres import PostgresHook
 from airflow.providers.amazon.aws.hooks.s3 import S3Hook
 from tempfile import NamedTemporaryFile
 import logging
-import sys
+import csv
 import pathlib
 from dotenv import dotenv_values
 
@@ -18,14 +18,13 @@ def insert_postgres(stage_name: str, table_name: str) -> bool:
      # PostgresHook connects to rds instance (postgres), write data_stage str into file and let cursor copy_from file and commit into 
      s3 = S3Hook(aws_conn_id='aws_default')
      data_stage = s3.read_key(key=stage_name, bucket_name=BUCKET_NAME)
-     
      pg_hook = PostgresHook(postgres_conn_id=POSTGRES_CONN_ID)
      conn = pg_hook.get_conn()
      cursor = conn.cursor()
      with NamedTemporaryFile(mode='w+') as f:
           f.write(data_stage)
           f.seek(0)
-          cursor.copy_from(f, table_name, sep=',')
+          cursor.copy_from(f, table_name, sep=':::')
           conn.commit()
           logging.info(f"Stage data {f.name} has been pushed to PostgreSQL DB in rds with size {f.tell()} B!")
      cursor.close()

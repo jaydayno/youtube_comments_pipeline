@@ -23,7 +23,8 @@ default_args = {
 }
 
 path_lib = Path(__file__).parent.resolve()
-combine_input = StringIO(f'channel_link = {provide_channel_name}' + '\n' + f'table_infix = {provide_table_infix}')
+combine_input = StringIO(f'channel_link = {provide_channel_name}' + '\n' + 
+                            f'table_infix = {provide_table_infix.strip().replace(" ", "").lower()}')
 config = dotenv_values(f"{path_lib}/configuration.env", stream=combine_input)
 
 with DAG(

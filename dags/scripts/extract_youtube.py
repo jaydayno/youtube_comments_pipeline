@@ -156,26 +156,27 @@ def add_channel_sql(ti, channel_name: str) -> bool:
     Raises:
         ValueError: Could not create SQL query with channel_name, check path.
     """
-    new_channel_name = channel_name.strip().replace(" ", "").lower()
-    val_table_name = f'youtube_{new_channel_name}_data'
-    ti.xcom_push(key='whole_table_name', value=val_table_name)
     try:
-        with open(f'dags/sql/youtube_{new_channel_name}_create.sql', 'w+') as fi:
+        with open(f'dags/sql/youtube_{channel_name}_create.sql', 'w+') as fi:
             fi.seek(0)
             fi.truncate()
             fi.write(
-            f"DROP TABLE IF EXISTS youtube_{new_channel_name}_data;" +
+            f"DROP TABLE IF EXISTS youtube_{channel_name}_data;" +
             dedent(f"""
-            CREATE TABLE IF NOT EXISTS youtube_{new_channel_name}_data (
+            CREATE TABLE IF NOT EXISTS youtube_{channel_name}_data (
                 id character varying,
                 author_channel_id character varying,
                 author character varying,
                 viewer_rating character varying,
                 published_at character varying,
                 updated_at character varying,
-                display_text character varying
+                display_text character varying,
+                text_polarities character varying,
+                classifications character varying
             );
             """))
+            val_table_name = f'youtube_{channel_name}_data'
+            ti.xcom_push(key='whole_table_name', value=val_table_name)
             return True
     except:
         raise ValueError('Could not create SQL query.')
