@@ -62,5 +62,6 @@ def invoke_with_operator(ti, target_name: str, stage_name: str):
         logging.info(payload)
         return True
     else:
+        ti.xcom_push(key='BUCKET_NAME', value=config['bucket_name'])
         logging.info(f"ALREADY UPLOADED STAGE DATA to S3 bucket: {BUCKET_NAME} with name {stage_name}")
         return False

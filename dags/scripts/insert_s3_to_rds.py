@@ -13,27 +13,21 @@ config = dotenv_values(f"{script_path}/configuration.env")
 BUCKET_NAME = config['bucket_name']
 POSTGRES_CONN_ID = config['db_id']
 
-def insert_postgres(stage_name: str) -> bool:
-   try:
-        # uses S3Hook, reads file (i.e. key), data_stage is a string of the contents of the S3 file
-        # PostgresHook connects to rds instance (postgres), write data_stage str into file and let cursor copy_from file and commit into 
-        s3 = S3Hook(aws_conn_id='aws_default')
-        data_stage = s3.read_key(key=stage_name, bucket_name=BUCKET_NAME)
-        
-        pg_hook = PostgresHook(postgres_conn_id=POSTGRES_CONN_ID)
-        conn = pg_hook.get_conn()
-        cursor = conn.cursor()
-        with NamedTemporaryFile(mode='w+') as f:
-            f.write(data_stage)
-            f.seek(0)
-            cursor.copy_from(f, "youtube_data", sep=',')
-            conn.commit()
-            logging.info(f"Stage data {f.name} has been pushed to PostgreSQL DB in rds with size {f.tell()} B!")
-            
-   except:
-        conn.rollback()
-        Exception("File from S3 did not upload to rds.")
-   finally:
-        cursor.close()
-        conn.close()
-        return True
+def insert_postgres(stage_name: str, table_name: str) -> bool:
+     # uses S3Hook, reads file (i.e. key), data_stage is a string of the contents of the S3 file
+     # PostgresHook connects to rds instance (postgres), write data_stage str into file and let cursor copy_from file and commit into 
+     s3 = S3Hook(aws_conn_id='aws_default')
+     data_stage = s3.read_key(key=stage_name, bucket_name=BUCKET_NAME)
+     
+     pg_hook = PostgresHook(postgres_conn_id=POSTGRES_CONN_ID)
+     conn = pg_hook.get_conn()
+     cursor = conn.cursor()
+     with NamedTemporaryFile(mode='w+') as f:
+          f.write(data_stage)
+          f.seek(0)
+          cursor.copy_from(f, table_name, sep=',')
+          conn.commit()
+          logging.info(f"Stage data {f.name} has been pushed to PostgreSQL DB in rds with size {f.tell()} B!")
+     cursor.close()
+     conn.close()
+     return True  

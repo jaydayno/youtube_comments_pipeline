@@ -1,4 +1,5 @@
 from datetime import datetime
+from textblob import TextBlob
 from io import StringIO
 import pandas as pd
 import datetime
@@ -52,9 +53,7 @@ def transform_data(data: dict) -> pd.DataFrame:
         if key == 'comment_displayTexts':
             list_of_values.append(
             [x.encode('utf-16', 'surrogatepass')
-            .decode('utf-16')
-            .encode("raw_unicode_escape")
-            .decode("latin_1") for x in data[key]])
+            .decode('utf-16') for x in data[key]])
         else:
             list_of_values.append(data[key])
     df = pd.DataFrame(list_of_values, index= ["id", "author_channel_id", "author", "viewer_rating", "published_at", "updated_at", "display_text"]).transpose()
@@ -72,6 +71,24 @@ def transform_data(data: dict) -> pd.DataFrame:
     if check_if_valid_data(df):
         logging.info(f"Data valid, proceed to Load stage. Row count: {row_count}")
     
+    return df
+
+def analyze_sentiments(df: pd.DataFrame) -> pd.DataFrame:
+    text_polarities, classifications = [], []
+    for text in df['display_text']:
+        blob = TextBlob(text)
+        polarity = blob.sentiment.polarity
+        if polarity > 0:
+            text_polarities.append(polarity)
+            classifications.append('Positive')
+        elif polarity == 0:
+            text_polarities.append(polarity)
+            classifications.append('Neutral')
+        else:
+            text_polarities.append(polarity)
+            classifications.append('Negative')
+    df['text_polarities'] = text_polarities
+    df['classifications'] = classifications
     return df
     
 def lambda_handler(event, context):
@@ -93,9 +110,10 @@ def lambda_handler(event, context):
     try:
         json_data = s3.get_object(Bucket=bucket, Key=key)["Body"].read()
         dict_data = json.loads(json_data)
-        df = transform_data(dict_data)
+        valid_df = transform_data(dict_data)
+        df = analyze_sentiments(valid_df)
         csv_buffer = StringIO()
-        df.to_csv(csv_buffer)
+        df.to_csv(csv_buffer, index=False)
         stage_file_name = key.split(sep='/')[1].split(sep='.')[0]
         key_for_stage = 'stage/' + stage_file_name + '.csv'
         s3.put_object(Body=csv_buffer.getvalue(), Bucket=bucket, Key=key_for_stage)

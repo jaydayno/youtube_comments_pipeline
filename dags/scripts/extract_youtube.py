@@ -112,7 +112,7 @@ def upload_to_S3(ti, target_name: str, channel_link: str, num_of_comments: int) 
         Returns False when the target_name already exists (i.e. already uploaded in S3).
     """
     # Retrieves channel_name from GET request and pushes to xcoms 
-    # (for tasks: 'create_channel_specific_sql_script' and 'create_table_in_rds')
+    # (for tasks: 'create_channel_specific_sql_script')
     page = requests.get(channel_link)
     soup = BeautifulSoup(page.content, 'html.parser')
     html = list(soup.children)[1]
@@ -139,12 +139,13 @@ def upload_to_S3(ti, target_name: str, channel_link: str, num_of_comments: int) 
         logging.info(f"ALREADY UPLOADED to S3 bucket: {BUCKET_NAME} with name {target_name}")
         return False
 
-def add_channel_sql(channel_name: str) -> bool:
+def add_channel_sql(ti, channel_name: str) -> bool:
     """
     Called in DAG.
     Creating the CREATE sql script with channel name.
 
     Args:
+        ti: TaskInstance type from Airflow, specific variable for templating.
         channel_name: Channel name provided by function 'parse_channel_id' via xcom.
                 Examples:
                 - https://www.youtube.com/channel/UC2xskkQVFEpLcGFnNSLQY0A --> RihannaVEVO
@@ -155,7 +156,9 @@ def add_channel_sql(channel_name: str) -> bool:
     Raises:
         ValueError: Could not create SQL query with channel_name, check path.
     """
-    new_channel_name = channel_name.strip().replace(" ", "")
+    new_channel_name = channel_name.strip().replace(" ", "").lower()
+    val_table_name = f'youtube_{new_channel_name}_data'
+    ti.xcom_push(key='whole_table_name', value=val_table_name)
     try:
         with open(f'dags/sql/youtube_{new_channel_name}_create.sql', 'w+') as fi:
             fi.seek(0)

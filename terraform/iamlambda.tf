@@ -66,6 +66,7 @@ resource "aws_lambda_function" "terraform_lambda_func" {
   depends_on                     = [aws_iam_role_policy_attachment.attach_iam_policy_to_iam_role]
   memory_size                    = 128
   layers                         = ["${aws_lambda_layer_version.python38-deployment-package.arn}"]
+  timeout                        = 60
 }
 
 resource "aws_lambda_layer_version" "python38-deployment-package" {
