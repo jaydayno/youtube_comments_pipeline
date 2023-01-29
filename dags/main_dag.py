@@ -8,15 +8,16 @@ from pathlib import Path
 from airflow import DAG
 from io import StringIO
 
-from scripts.extract_youtube import upload_to_S3, add_channel_sql
+from scripts.extract_youtube import upload_to_S3, add_channel_sql, alter_channel_sql
 from scripts.add_connection import add_AWS_connection_to_airflow, add_config_as_variables_to_airflow, add_rds_postgres_connection
 from scripts.event_for_lambda import invoke_with_operator
 from scripts.insert_s3_to_rds import insert_postgres
 
-# Provide channel_link and the infix for the name of your table in RDS postgres 
+# Provide channel_link, the infix for the name of your table in RDS postgres and max amount of comments
 # (table name will be formatted to be PostgreSQL friendly, see SQL directory)
 provide_channel_name = 'https://www.youtube.com/@UnderTheInfluenceShow'
 provide_table_infix = 'UnderTheInfluenceShow'
+provide_num_of_comments = 50
 
 default_args = {
     'owner': 'jay',
@@ -24,7 +25,8 @@ default_args = {
 
 path_lib = Path(__file__).parent.resolve()
 combine_input = StringIO(f'channel_link = {provide_channel_name}' + '\n' + 
-                            f'table_infix = {provide_table_infix.strip().replace(" ", "").lower()}')
+                            f'table_infix = {provide_table_infix.strip().replace(" ", "").lower()}'+ '\n' + 
+                            f'comment_max = {provide_num_of_comments}')
 config = dotenv_values(f"{path_lib}/configuration.env", stream=combine_input)
 
 with DAG(
@@ -54,7 +56,7 @@ with DAG(
          op_kwargs={
          'target_name': 'raw/youtube_data_{{ ds_nodash }}.json',
          'channel_link': config['channel_link'],
-         'num_of_comments': 10
+         'num_of_comments': int(config['comment_max'])
          }
       )
 
@@ -108,16 +110,33 @@ with DAG(
         }
     )
 
+# # Task 9
+    alter_sql_script = PythonOperator(
+        task_id='alter_data_types_sql_script',
+        python_callable=alter_channel_sql,
+         op_kwargs={
+         'channel_name': config['table_infix'],
+         }
+    )
+
+# # Task 10
+    alter_youtube_table = PostgresOperator(
+        task_id="alter_table_in_rds",
+        postgres_conn_id="db-postgres",
+        sql="sql/youtube_"+ config['table_infix'] + "_alter.sql"
+    )
+
+
 # # DONE ETL data pipeline
 
 ############### Setting task order ################
 begin_task >> add_aws_connection >> upload_raw >> add_sql_script
 add_sql_script >> invoke_lambda_function >> sense_stage_data
 sense_stage_data >> connect_to_rds_postgres >> create_youtube_table
-create_youtube_table >> insert_into_youtube_table
+create_youtube_table >> insert_into_youtube_table >> alter_sql_script >> alter_youtube_table
 
 # from airflow.providers.amazon.aws.operators.rds import RdsStopDbOperator
-# # # Task 9
+# # # Task 10
 #     start_rds = RdsStopDbOperator(
 #         db_identifier="{{ var.value.db_id }}",
 #         db_type="instance",

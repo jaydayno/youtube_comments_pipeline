@@ -70,7 +70,7 @@ def extract_youtube_api(channel_link: str, num_of_comments: int) -> dict:
     r = requests.get("https://www.googleapis.com/youtube/v3/commentThreads", params = params)
 
     data = r.json()
-    comment_ids, comment_authors, comment_authors_channelIds, comment_publishedAt_dates, comment_updatedAt_dates, comment_viewerRatings, comment_textOriginal = ([] for i in range(7))
+    comment_ids, comment_authors, comment_authors_channelIds, comment_publishedAt_dates, comment_updatedAt_dates, comment_viewerRatings, comment_likeCounts , comment_textOriginal = ([] for i in range(8))
 
     for item in data['items']:
         comment_ids.append(item['id'])
@@ -79,6 +79,7 @@ def extract_youtube_api(channel_link: str, num_of_comments: int) -> dict:
         comment_viewerRatings.append(item['snippet']['topLevelComment']['snippet']['viewerRating'])
         comment_publishedAt_dates.append(item['snippet']['topLevelComment']['snippet']['publishedAt'])
         comment_updatedAt_dates.append(item['snippet']['topLevelComment']['snippet']['updatedAt'])
+        comment_likeCounts.append(item['snippet']['topLevelComment']['snippet']['likeCount'])
         comment_textOriginal.append(item['snippet']['topLevelComment']['snippet']['textOriginal'])
 
     comment_dict = {
@@ -88,6 +89,7 @@ def extract_youtube_api(channel_link: str, num_of_comments: int) -> dict:
                 "comment_viewerRatings" : comment_viewerRatings,
                 "comment_publishedAt_dates" : comment_publishedAt_dates,
                 "comment_updatedAt_dates" : comment_updatedAt_dates,
+                "comment_likeCounts" : comment_likeCounts,
                 "comment_displayTexts" : comment_textOriginal
             }
 
@@ -146,9 +148,7 @@ def add_channel_sql(ti, channel_name: str) -> bool:
 
     Args:
         ti: TaskInstance type from Airflow, specific variable for templating.
-        channel_name: Channel name provided by function 'parse_channel_id' via xcom.
-                Examples:
-                - https://www.youtube.com/channel/UC2xskkQVFEpLcGFnNSLQY0A --> RihannaVEVO
+        channel_name: Channel name provided by user (lowercase and no spaces)
 
     Returns:
         Returns True if SQL query is created with channel name.
@@ -164,19 +164,50 @@ def add_channel_sql(ti, channel_name: str) -> bool:
             f"DROP TABLE IF EXISTS youtube_{channel_name}_data;" +
             dedent(f"""
             CREATE TABLE IF NOT EXISTS youtube_{channel_name}_data (
-                id character varying,
+                id character varying PRIMARY KEY,
                 author_channel_id character varying,
                 author character varying,
                 viewer_rating character varying,
                 published_at character varying,
                 updated_at character varying,
+                like_count character varying,
                 display_text character varying,
+                key_phrase character varying,
                 text_polarities character varying,
                 classifications character varying
             );
             """))
             val_table_name = f'youtube_{channel_name}_data'
             ti.xcom_push(key='whole_table_name', value=val_table_name)
+            return True
+    except:
+        raise ValueError('Could not create SQL query.')
+
+def alter_channel_sql(channel_name: str) -> bool:
+    """
+    Called in DAG.
+    Creating the ALTER sql script with channel name.
+
+    Args:
+        channel_name: Channel name provided by user (lowercase and no spaces)
+
+    Returns:
+        Returns True if SQL query is created with channel name.
+
+    Raises:
+        ValueError: Could not create SQL query with channel_name, check path.
+    """
+    try:
+        with open(f'dags/sql/youtube_{channel_name}_alter.sql', 'w+') as fi:
+            fi.seek(0)
+            fi.truncate()
+            fi.write(
+            dedent(f"""ALTER TABLE youtube_{channel_name}_data 
+            ALTER column published_at TYPE timestamp USING published_at::timestamp without time zone,
+            ALTER column updated_at TYPE timestamp USING updated_at::timestamp without time zone,
+            ALTER column like_count TYPE integer,
+            ALTER column text_polarities TYPE real;
+            """))
             return True
     except:
         raise ValueError('Could not create SQL query.')

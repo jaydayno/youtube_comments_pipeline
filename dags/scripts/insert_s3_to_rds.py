@@ -24,7 +24,7 @@ def insert_postgres(stage_name: str, table_name: str) -> bool:
      with NamedTemporaryFile(mode='w+') as f:
           f.write(data_stage)
           f.seek(0)
-          cursor.copy_from(f, table_name, sep=':::')
+          cursor.copy_from(f, table_name, sep=bytes.fromhex('1d').decode('utf-8'))
           conn.commit()
           logging.info(f"Stage data {f.name} has been pushed to PostgreSQL DB in rds with size {f.tell()} B!")
      cursor.close()

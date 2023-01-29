@@ -1,5 +1,8 @@
+from nltk.tokenize import word_tokenize
+from nltk.corpus import stopwords
 from datetime import datetime
 from textblob import TextBlob
+from multi_rake import Rake
 from io import StringIO
 import pandas as pd
 import numpy as np
@@ -8,7 +11,6 @@ import logging
 import urllib
 import boto3
 import json
-
 
 def check_if_valid_data(df: pd.DataFrame) -> bool:
     """
@@ -56,7 +58,7 @@ def transform_data(data: dict) -> pd.DataFrame:
             .decode('utf-16') for x in data[key]])
         else:
             list_of_values.append(data[key])
-    df = pd.DataFrame(list_of_values, index= ["id", "author_channel_id", "author", "viewer_rating", "published_at", "updated_at", "display_text"]).transpose()
+    df = pd.DataFrame(list_of_values, index= ["id", "author_channel_id", "author", "viewer_rating", "published_at", "updated_at", "like_count", "display_text"]).transpose()
     
     df['published_at'].apply(lambda x: 
         datetime.datetime.strptime(x, '%Y-%m-%dT%H:%M:%SZ').strftime("%Y-%m-%d %H:%M:%S"))
@@ -76,7 +78,7 @@ def transform_data(data: dict) -> pd.DataFrame:
 def analyze_sentiments(df: pd.DataFrame) -> pd.DataFrame:
     """
     Called in lambda_handler() function.
-    Retrieves valid data (df) and extends the dataframe with 2 columns for 'text_polarities' [-1, 1] and 'classifications'
+    Retrieves valid data (df) and extends the dataframe with 3 columns for 'key_phrases', 'text_polarities' [-1, 1] and 'classifications'.
     
     Args:
         df: Valid data from transform_data()
@@ -84,8 +86,19 @@ def analyze_sentiments(df: pd.DataFrame) -> pd.DataFrame:
     Returns:
         Returns dataframe with classifications for each comment
     """  
-    text_polarities, classifications = [], []
-    for text in df['display_text']:
+    text_polarities, classifications, key_phrases = [], [], []
+    for unfiltered_text in df['display_text']:
+
+        # Filtering text for stopwords
+        stop_words = set(stopwords.words('english'))
+        word_tokens = word_tokenize(unfiltered_text)
+        filtered_sentence = []
+        for word in word_tokens:
+            if word.casefold() not in stop_words:
+                filtered_sentence.append(word)
+        text = ' '.join(filtered_sentence)
+
+        # Using filtered text for sentiment analysis
         blob = TextBlob(text)
         polarity = blob.sentiment.polarity
         if polarity > 0:
@@ -97,6 +110,23 @@ def analyze_sentiments(df: pd.DataFrame) -> pd.DataFrame:
         else:
             text_polarities.append(polarity)
             classifications.append('Negative')
+
+        # Using multi-rake (RAKE algorithm) for keywords/key phrases
+        rake = Rake()
+        keywords = rake.apply(unfiltered_text)
+        # phrases = [] 
+        # points = set()
+        # for phrase, point in keywords:
+        #     if point in points:
+        #         break
+        #     else:
+        #         points.add(point)
+        #         phrases.append(phrase)  
+        # most_relevant_phrase = ' '.join(phrases)
+        most_relevant_phrase = keywords[0][0]
+        key_phrases.append(most_relevant_phrase)
+
+    df['key_phrase'] = key_phrases
     df['text_polarities'] = text_polarities
     df['classifications'] = classifications
     return df
@@ -124,7 +154,7 @@ def lambda_handler(event, context):
         df = analyze_sentiments(valid_df)
         csv_buffer = StringIO()
         my_numpy = df.to_numpy()
-        np.savetxt(csv_buffer, my_numpy, fmt='%s', delimiter=':::')
+        np.savetxt(csv_buffer, my_numpy, fmt='%s', delimiter=bytes.fromhex('1d').decode('utf-8'))
         stage_file_name = key.split(sep='/')[1].split(sep='.')[0]
         key_for_stage = 'stage/' + stage_file_name + '.csv'
         s3.put_object(Body=csv_buffer.getvalue(), Bucket=bucket, Key=key_for_stage)
