@@ -2,7 +2,7 @@ from nltk.tokenize import word_tokenize
 from nltk.corpus import stopwords
 from datetime import datetime
 from textblob import TextBlob
-from multi_rake import Rake
+from rake_nltk import Rake
 from io import StringIO
 import pandas as pd
 import numpy as np
@@ -11,6 +11,7 @@ import logging
 import urllib
 import boto3
 import json
+import nltk
 
 def check_if_valid_data(df: pd.DataFrame) -> bool:
     """
@@ -55,7 +56,9 @@ def transform_data(data: dict) -> pd.DataFrame:
         if key == 'comment_displayTexts':
             list_of_values.append(
             [x.encode('utf-16', 'surrogatepass')
-            .decode('utf-16') for x in data[key]])
+            .decode('utf-16')
+            .replace("|", ";")
+            .replace("\n", " ") for x in data[key]])
         else:
             list_of_values.append(data[key])
     df = pd.DataFrame(list_of_values, index= ["id", "author_channel_id", "author", "viewer_rating", "published_at", "updated_at", "like_count", "display_text"]).transpose()
@@ -85,7 +88,10 @@ def analyze_sentiments(df: pd.DataFrame) -> pd.DataFrame:
 
     Returns:
         Returns dataframe with classifications for each comment
-    """  
+    """ 
+    nltk.data.path.append("/tmp")
+    nltk.download("stopwords", download_dir="/tmp")
+    nltk.download("punkt", download_dir="/tmp")
     text_polarities, classifications, key_phrases = [], [], []
     for unfiltered_text in df['display_text']:
 
@@ -111,19 +117,10 @@ def analyze_sentiments(df: pd.DataFrame) -> pd.DataFrame:
             text_polarities.append(polarity)
             classifications.append('Negative')
 
-        # Using multi-rake (RAKE algorithm) for keywords/key phrases
-        rake = Rake()
-        keywords = rake.apply(unfiltered_text)
-        # phrases = [] 
-        # points = set()
-        # for phrase, point in keywords:
-        #     if point in points:
-        #         break
-        #     else:
-        #         points.add(point)
-        #         phrases.append(phrase)  
-        # most_relevant_phrase = ' '.join(phrases)
-        most_relevant_phrase = keywords[0][0]
+        # Using rake_nltk (RAKE algorithm) for keywords/key phrases
+        r = Rake()
+        r.extract_keywords_from_text(unfiltered_text)
+        most_relevant_phrase = r.get_ranked_phrases()[0]
         key_phrases.append(most_relevant_phrase)
 
     df['key_phrase'] = key_phrases
@@ -154,7 +151,7 @@ def lambda_handler(event, context):
         df = analyze_sentiments(valid_df)
         csv_buffer = StringIO()
         my_numpy = df.to_numpy()
-        np.savetxt(csv_buffer, my_numpy, fmt='%s', delimiter=bytes.fromhex('1d').decode('utf-8'))
+        np.savetxt(csv_buffer, my_numpy, fmt='%s', delimiter="|")
         stage_file_name = key.split(sep='/')[1].split(sep='.')[0]
         key_for_stage = 'stage/' + stage_file_name + '.csv'
         s3.put_object(Body=csv_buffer.getvalue(), Bucket=bucket, Key=key_for_stage)
