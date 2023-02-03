@@ -39,3 +39,8 @@ output "db_port" {
 output "db_username" {
   value     = aws_db_instance.db-postgres.username
 }
+
+output "db_password" {
+  value     = random_password.password.result
+  sensitive = true
+}
