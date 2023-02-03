@@ -159,7 +159,6 @@ def add_channel_sql(ti, channel_name: str) -> bool:
             fi.seek(0)
             fi.truncate()
             fi.write(
-            f"DROP TABLE IF EXISTS youtube_{channel_name}_data;" +
             dedent(f"""
             CREATE TABLE IF NOT EXISTS youtube_{channel_name}_data (
                 id character varying PRIMARY KEY,

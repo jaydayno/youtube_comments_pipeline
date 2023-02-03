@@ -13,11 +13,11 @@ from scripts.add_connection import add_AWS_connection_to_airflow, add_config_as_
 from scripts.event_for_lambda import invoke_with_operator
 from scripts.insert_s3_to_rds import insert_postgres
 
-# Provide channel_link, the infix for the name of your table in RDS postgres and max amount of comments
+# Provide channel_link, the infix for the name of your table in RDS postgres and max amount of comments [max 100]
 # (table name will be formatted to be PostgreSQL friendly, see SQL directory)
 provide_channel_name = 'https://www.youtube.com/channel/UCJjSDX-jUChzOEyok9XYRJQ'
 provide_table_infix = 'Jubilee'
-provide_num_of_comments = 300
+provide_num_of_comments = 100 
 
 default_args = {
     'owner': 'jay',
@@ -49,12 +49,12 @@ with DAG(
     )
 
 # # Task 2
-# # ds_nodash is date formatted YYYYMMDD
+# # ts_nodash example: 20180101T000000
     upload_raw = PythonOperator(
          task_id='extract_and_upload_raw',
          python_callable=upload_to_S3,
          op_kwargs={
-         'target_name': 'raw/youtube_data_{{ ds_nodash }}.json',
+         'target_name': 'raw/youtube_data_{{ ts_nodash }}.json',
          'channel_link': config['channel_link'],
          'num_of_comments': int(config['comment_max'])
          }
@@ -74,8 +74,8 @@ with DAG(
         task_id="invoke_lambda_function",
         python_callable=invoke_with_operator,
         op_kwargs={
-        'target_name': 'raw/youtube_data_{{ ds_nodash }}.json',
-        'stage_name': 'stage/youtube_data_{{ ds_nodash }}.csv'
+        'target_name': 'raw/youtube_data_{{ ts_nodash }}.json',
+        'stage_name': 'stage/youtube_data_{{ ts_nodash }}.csv'
         }
     )
 
@@ -83,7 +83,7 @@ with DAG(
     sense_stage_data = S3KeySensor(
         task_id="wait_for_stage_data_from_lambda",
         bucket_name="{{ task_instance.xcom_pull(task_ids='invoke_lambda_function', key='BUCKET_NAME') }}",
-        bucket_key="stage/youtube_data_{{ ds_nodash }}.csv"
+        bucket_key="stage/youtube_data_{{ ts_nodash }}.csv"
     )
 
 # # Inserting S3 data into rds instance postgres DB: youtube_comment_db
@@ -105,7 +105,7 @@ with DAG(
         task_id='insert_s3_data_into_rds',
         python_callable=insert_postgres,
         op_kwargs={
-            'stage_name': 'stage/youtube_data_{{ ds_nodash }}.csv',
+            'stage_name': 'stage/youtube_data_{{ ts_nodash }}.csv',
             'table_name': "{{ task_instance.xcom_pull(task_ids='create_channel_specific_sql_script', key='whole_table_name') }}"  # 'youtube_{table_infix}_data'
         }
     )
