@@ -61,7 +61,7 @@ def transform_data(data: dict) -> pd.DataFrame:
             .replace("\n", " ") for x in data[key]])
         else:
             list_of_values.append(data[key])
-    df = pd.DataFrame(list_of_values, index= ["id", "author_channel_id", "author", "viewer_rating", "published_at", "updated_at", "like_count", "display_text"]).transpose()
+    df = pd.DataFrame(list_of_values, index= ["id", "author_channel_id", "author", "published_at", "updated_at", "like_count", "display_text"]).transpose()
     
     df['published_at'].apply(lambda x: 
         datetime.datetime.strptime(x, '%Y-%m-%dT%H:%M:%SZ').strftime("%Y-%m-%d %H:%M:%S"))

@@ -53,7 +53,7 @@ def extract_youtube_api(channel_link: str, num_of_comments: int) -> dict:
 
     Returns:
         Python dictionary containg lists of Youtube Comment data from their API:
-            "id", "authorChannelId", "authorDisplayName", "viewerRating", 
+            "id", "authorChannelId", "authorDisplayName", 
             "publishedAt", "updatedAt", "textOriginal"
     """
     channel_id = parse_channel_id(channel_link)
@@ -70,13 +70,12 @@ def extract_youtube_api(channel_link: str, num_of_comments: int) -> dict:
     r = requests.get("https://www.googleapis.com/youtube/v3/commentThreads", params = params)
 
     data = r.json()
-    comment_ids, comment_authors, comment_authors_channelIds, comment_publishedAt_dates, comment_updatedAt_dates, comment_viewerRatings, comment_likeCounts , comment_textOriginal = ([] for i in range(8))
+    comment_ids, comment_authors, comment_authors_channelIds, comment_publishedAt_dates, comment_updatedAt_dates, comment_likeCounts , comment_textOriginal = ([] for i in range(7))
 
     for item in data['items']:
         comment_ids.append(item['id'])
         comment_authors_channelIds.append(item['snippet']['topLevelComment']['snippet']['authorChannelId']['value'])
         comment_authors.append(item['snippet']['topLevelComment']['snippet']['authorDisplayName'])
-        comment_viewerRatings.append(item['snippet']['topLevelComment']['snippet']['viewerRating'])
         comment_publishedAt_dates.append(item['snippet']['topLevelComment']['snippet']['publishedAt'])
         comment_updatedAt_dates.append(item['snippet']['topLevelComment']['snippet']['updatedAt'])
         comment_likeCounts.append(item['snippet']['topLevelComment']['snippet']['likeCount'])
@@ -86,7 +85,6 @@ def extract_youtube_api(channel_link: str, num_of_comments: int) -> dict:
                 "comment_ids" : comment_ids,
                 "comment_authors_channelIds": comment_authors_channelIds,
                 "comment_authors" : comment_authors,
-                "comment_viewerRatings" : comment_viewerRatings,
                 "comment_publishedAt_dates" : comment_publishedAt_dates,
                 "comment_updatedAt_dates" : comment_updatedAt_dates,
                 "comment_likeCounts" : comment_likeCounts,
@@ -167,7 +165,6 @@ def add_channel_sql(ti, channel_name: str) -> bool:
                 id character varying PRIMARY KEY,
                 author_channel_id character varying,
                 author character varying,
-                viewer_rating character varying,
                 published_at character varying,
                 updated_at character varying,
                 like_count character varying,
@@ -201,13 +198,13 @@ def alter_channel_sql(channel_name: str) -> bool:
         with open(f'dags/sql/youtube_{channel_name}_alter.sql', 'w+') as fi:
             fi.seek(0)
             fi.truncate()
-            fi.write(
-            dedent(f"""ALTER TABLE youtube_{channel_name}_data 
+            query = f"""ALTER TABLE youtube_{channel_name}_data 
             ALTER column published_at TYPE timestamp USING published_at::timestamp without time zone,
             ALTER column updated_at TYPE timestamp USING updated_at::timestamp without time zone,
-            ALTER column like_count TYPE integer,
-            ALTER column text_polarities TYPE real;
-            """))
+            ALTER column like_count TYPE integer USING (like_count::integer),
+            ALTER column text_polarities TYPE real USING (text_polarities::real);
+            """
+            fi.write('\n'.join([m.lstrip() for m in query.split('\n')]))
             return True
     except:
         raise ValueError('Could not create SQL query.')

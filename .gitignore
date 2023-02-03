@@ -10,3 +10,4 @@ terraform/my-deployment-package.zip
 youtube_create.sql
 plugins
 dags/scripts/transform_json.zip
+generate_config.sh

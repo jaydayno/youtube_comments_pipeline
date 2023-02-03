@@ -15,9 +15,9 @@ from scripts.insert_s3_to_rds import insert_postgres
 
 # Provide channel_link, the infix for the name of your table in RDS postgres and max amount of comments
 # (table name will be formatted to be PostgreSQL friendly, see SQL directory)
-provide_channel_name = 'https://www.youtube.com/@UnderTheInfluenceShow'
-provide_table_infix = 'UnderTheInfluenceShow'
-provide_num_of_comments = 50
+provide_channel_name = 'https://www.youtube.com/channel/UCJjSDX-jUChzOEyok9XYRJQ'
+provide_table_infix = 'Jubilee'
+provide_num_of_comments = 300
 
 default_args = {
     'owner': 'jay',
@@ -31,7 +31,7 @@ config = dotenv_values(f"{path_lib}/configuration.env", stream=combine_input)
 
 with DAG(
     default_args=default_args,
-    dag_id='primary_dagv3',
+    dag_id='youtube_comment_etl_dag',
     start_date=datetime.today(),
     catchup=False
 ) as dag:
@@ -136,7 +136,7 @@ sense_stage_data >> connect_to_rds_postgres >> create_youtube_table
 create_youtube_table >> insert_into_youtube_table >> alter_sql_script >> alter_youtube_table
 
 # from airflow.providers.amazon.aws.operators.rds import RdsStopDbOperator
-# # # Task 10
+# # # Task 11
 #     start_rds = RdsStopDbOperator(
 #         db_identifier="{{ var.value.db_id }}",
 #         db_type="instance",
