@@ -105,7 +105,7 @@ with DAG(
         task_id='insert_s3_data_into_rds',
         python_callable=insert_postgres,
         op_kwargs={
-            'stage_name': 'stage/youtube_data_{{ ts_nodash }}.csv',
+            'stage_name': 'stage/youtube_data_20230204T154525.csv', # 'stage/youtube_data_{{ ts_nodash }}.csv'
             'table_name': "{{ task_instance.xcom_pull(task_ids='create_channel_specific_sql_script', key='whole_table_name') }}"  # 'youtube_{table_infix}_data'
         }
     )
@@ -134,7 +134,7 @@ begin_task >> add_aws_connection >> upload_raw >> add_sql_script
 add_sql_script >> invoke_lambda_function >> sense_stage_data
 sense_stage_data >> connect_to_rds_postgres >> create_youtube_table
 create_youtube_table >> insert_into_youtube_table >> alter_sql_script >> alter_youtube_table
-
+#add_sql_script >> insert_into_youtube_table >> alter_sql_script >> alter_youtube_table
 # from airflow.providers.amazon.aws.operators.rds import RdsStopDbOperator
 # # # Task 11
 #     start_rds = RdsStopDbOperator(

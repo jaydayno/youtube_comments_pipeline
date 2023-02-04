@@ -1,4 +1,4 @@
-DROP TABLE IF EXISTS youtube_jubilee_data;
+
 CREATE TABLE IF NOT EXISTS youtube_jubilee_data (
     id character varying PRIMARY KEY,
     author_channel_id character varying,

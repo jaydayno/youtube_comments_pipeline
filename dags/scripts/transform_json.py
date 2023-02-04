@@ -12,6 +12,7 @@ import urllib
 import boto3
 import json
 import nltk
+import re
 
 def check_if_valid_data(df: pd.DataFrame) -> bool:
     """
@@ -58,6 +59,7 @@ def transform_data(data: dict) -> pd.DataFrame:
             [x.encode('utf-16', 'surrogatepass')
             .decode('utf-16')
             .replace("|", ";")
+            .replace("\r", " ")
             .replace("\n", " ") for x in data[key]])
         else:
             list_of_values.append(data[key])
