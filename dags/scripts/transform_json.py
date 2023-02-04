@@ -121,7 +121,11 @@ def analyze_sentiments(df: pd.DataFrame) -> pd.DataFrame:
         # Using rake_nltk (RAKE algorithm) for keywords/key phrases
         r = Rake()
         r.extract_keywords_from_text(unfiltered_text)
-        most_relevant_phrase = r.get_ranked_phrases()[0]
+        ranked_phrases = r.get_ranked_phrases()
+        if ranked_phrases:
+            most_relevant_phrase = r.get_ranked_phrases()[0]
+        else:
+            most_relevant_phrase = ""
         key_phrases.append(most_relevant_phrase)
 
     df['key_phrase'] = key_phrases

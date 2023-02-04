@@ -31,7 +31,7 @@ config = dotenv_values(f"{path_lib}/configuration.env", stream=combine_input)
 
 with DAG(
     default_args=default_args,
-    dag_id='youtube_comment_etl_dagv2',
+    dag_id='youtube_comment_etl_dag',
     start_date=datetime.today(),
     catchup=False
 ) as dag:
