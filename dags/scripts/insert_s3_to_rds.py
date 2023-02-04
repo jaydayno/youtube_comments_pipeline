@@ -22,7 +22,6 @@ def insert_postgres(stage_name: str, table_name: str) -> bool:
      with NamedTemporaryFile(mode='w+') as f:
           f.write(data_stage)
           f.seek(0)
-          #cursor.copy_from(f, table_name, sep="|")
           stage_data_lines = f.read().splitlines()
           count_before_insert = len(stage_data_lines)
           insert_sql = f'''
@@ -37,7 +36,7 @@ def insert_postgres(stage_name: str, table_name: str) -> bool:
                cursor.execute(insert_sql, values)
           cursor.execute(f'SELECT COUNT(*) FROM {table_name}')
           result = cursor.fetchone()
-          count_after_insert = result['count'] # might have to use [0]
+          count_after_insert = result[0]
           num_of_rows_added = count_after_insert - count_before_insert
           conn.commit()
           logging.info(f"Stage data {f.name} has been pushed to PostgreSQL DB in rds with size {f.tell()} B!")

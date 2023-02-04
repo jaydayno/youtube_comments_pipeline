@@ -12,7 +12,6 @@ import urllib
 import boto3
 import json
 import nltk
-import re
 
 def check_if_valid_data(df: pd.DataFrame) -> bool:
     """
