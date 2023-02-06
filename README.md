@@ -18,7 +18,8 @@ Concluded with data visualization in Tableau dashboard.
 
 
 ## Architecture
-![Pipeline Architecture](images/youtube_dashboard_architecture.png)
+<img src="images/youtube_dashboard_architecture.png" width="975" />
+
 #### Technologies
 - [Airflow](https://airflow.apache.org/) as orchestration (v2.5.0)
 - [Terraform](https://www.terraform.io/) for provisioning infrastructure
