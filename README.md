@@ -4,7 +4,7 @@
 
 This ETL pipeline extracts Youtube comments relevant to the provided channel, transforms the data through AWS Lambda and loads stage data into an AWS RDS instance PostgreSQL database.
 
-Concluded with data visualization done in Tableau dashboard.
+Concluded with data visualization in Tableau dashboard.
 
 
 ## Table of Contents
