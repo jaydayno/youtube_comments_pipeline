@@ -18,15 +18,15 @@ Concluded with data visualization done in Tableau dashboard.
 
 
 ## Architecture
-Pic (and link all of the tools)
+![Pipeline Architecture](images/youtube_dashboard_architecture.png)
 
 ### Technologies
-- [Airflow](#airflow) as orchestration (v2.5.0)
-- [Terraform](#terraform) for provisioning infrastructure
-- [AWS S3](#awss3) as storage for raw and stage data
-- [AWS Lambda](#lambda) for data processing
-- [AWS RDS](#rds) instance establishes PostgreSQL database
-- [Tableau](#tableau) for dashboarding
+- [Airflow](https://airflow.apache.org/) as orchestration (v2.5.0)
+- [Terraform](https://www.terraform.io/) for provisioning infrastructure
+- [AWS S3](https://aws.amazon.com/s3/) as storage for raw and stage data
+- [AWS Lambda](https://aws.amazon.com/lambda/) for data processing
+- [AWS RDS](https://aws.amazon.com/rds/) instance establishes PostgreSQL database
+- [Tableau](https://www.tableau.com/) for dashboarding
 
 ### DAG Task Summary
 0. Add configuration.env as Airflow variables (all key-value pairs from terraform outputs)
@@ -43,11 +43,11 @@ Pic (and link all of the tools)
 
 
 ## Requirements
-- [Docker](#docker) with 4 GB of memory and [Docker-Compose](#docker-compose) v1.29.1 [Needed for Airflow v2.5.0]
-- Install and configure [AWS CLI](#aws-cli)
-- Install and configure [Google Cloud CLI (gcloud)](#docker)
-    * Create API key (console.cloud.google.com) with access to "Youtube Data API v3"
-- [Terraform](#terraform) for creating AWS infrastructure
+- [Docker](https://www.docker.com/) with 4 GB of memory and [Docker-Compose](https://docs.docker.com/compose/) v1.29.1 [Needed for Airflow v2.5.0]
+- Install and configure [AWS CLI](https://aws.amazon.com/cli/)
+- Install and configure [Google Cloud CLI (gcloud)](https://cloud.google.com/sdk/gcloud)
+    * Create API key on [Google Cloud Console](https://console.cloud.google.com/) with access to "Youtube Data API v3"
+- [Terraform](https://www.terraform.io/) for creating AWS infrastructure
 
 ## Usage
 
@@ -73,6 +73,8 @@ provide_table_infix = 'Jubilee'
 provide_num_of_comments = 100 
 ```
 
-Dashboard 1
+[Link to Public Tableau Dashboard](https://public.tableau.com/app/profile/jayden.dayno6022/viz/JubileeDashboard/CurrentData)
 
-Dashboard 2
+![Tablular Data](images/tabular_data_dashboard_1.png)
+
+![Statistics Summary](images/comment_statistics_dashboard_2.png)
