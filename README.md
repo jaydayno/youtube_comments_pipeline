@@ -9,18 +9,17 @@ Concluded with data visualization in Tableau dashboard.
 
 ## Table of Contents
 
-- [Architecture](##architecture)
-    * [Technologies](###technologies)
-    * [DAG Task Summary](###dag-task-summary)
-- [Requirements](##requirements)
-- [Usage](##usage)
-- [Example Dashboard (Ex. Youtube Channel: Jubliee)](##example-dashboard)
+- [Architecture](#architecture)
+    * [Technologies](#technologies)
+    * [DAG Task Summary](#dag-task-summary)
+- [Requirements](#requirements)
+- [Usage](#usage)
+- [Example Dashboard (Ex. Youtube Channel: Jubliee)](#example-dashboard)
 
 
 ## Architecture
 ![Pipeline Architecture](images/youtube_dashboard_architecture.png)
-
-### Technologies
+#### Technologies
 - [Airflow](https://airflow.apache.org/) as orchestration (v2.5.0)
 - [Terraform](https://www.terraform.io/) for provisioning infrastructure
 - [AWS S3](https://aws.amazon.com/s3/) as storage for raw and stage data
@@ -28,7 +27,7 @@ Concluded with data visualization in Tableau dashboard.
 - [AWS RDS](https://aws.amazon.com/rds/) instance establishes PostgreSQL database
 - [Tableau](https://www.tableau.com/) for dashboarding
 
-### DAG Task Summary
+#### DAG Task Summary
 0. Add configuration.env as Airflow variables (all key-value pairs from terraform outputs)
 1. Connect Airflow with AWS
 2. Call the Youtube API (specifically: https://www.googleapis.com/youtube/v3/commentThreads) and uploading as raw data (json) to S3 bucket. Creates directory: raw/
