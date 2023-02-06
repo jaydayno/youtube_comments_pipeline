@@ -8,8 +8,8 @@ from pathlib import Path
 from airflow import DAG
 from io import StringIO
 
-from scripts.extract_youtube import upload_to_S3, add_channel_sql, alter_channel_sql
 from scripts.add_connection import add_AWS_connection_to_airflow, add_config_as_variables_to_airflow, add_rds_postgres_connection
+from scripts.extract_youtube import upload_to_S3, add_channel_sql, alter_channel_sql
 from scripts.event_for_lambda import invoke_with_operator
 from scripts.insert_s3_to_rds import insert_postgres
 

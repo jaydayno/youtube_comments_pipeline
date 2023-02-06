@@ -54,7 +54,7 @@ def extract_youtube_api(channel_link: str, num_of_comments: int) -> dict:
     Returns:
         Python dictionary containg lists of Youtube Comment data from their API:
             "id", "authorChannelId", "authorDisplayName", 
-            "publishedAt", "updatedAt", "textOriginal"
+            "publishedAt", "updatedAt", "likeCount" , "textOriginal"
     """
     channel_id = parse_channel_id(channel_link)
 
